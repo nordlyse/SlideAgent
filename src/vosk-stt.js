@@ -13,22 +13,22 @@ async function loadVoskModel(url) {
   const Model = mod.Model ?? mod.default?.Model;
   if (typeof Model !== "function") {
     const createModel = mod.createModel ?? mod.default?.createModel;
-    if (typeof createModel !== "function") throw new Error("vosk-browser yüklenemedi");
+    if (typeof createModel !== "function") throw new Error("vosk-browser failed to load");
     return createModel(url);
   }
   const model = new Model(url);
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("Vosk zaman aşımı")), 180000);
+    const timer = setTimeout(() => reject(new Error("Vosk timed out")), 180000);
     const fail = (err) => {
       clearTimeout(timer);
-      reject(err instanceof Error ? err : new Error(String(err?.error ?? err ?? "Vosk hata")));
+      reject(err instanceof Error ? err : new Error(String(err?.error ?? err ?? "Vosk error")));
     };
     model.on("error", fail);
     model.on("load", (message) => {
       if (message?.result) {
         clearTimeout(timer);
         resolve(model);
-      } else fail(new Error("Vosk modeli yüklenemedi"));
+      } else fail(new Error("Vosk model failed to load"));
     });
   });
 }
@@ -59,7 +59,7 @@ export class VoskStt {
     if (this.listening) return;
     const mic = await window.slideagent?.ensureMicrophone?.();
     if (mic && mic.ok === false) {
-      throw new Error(mic.reason || "Mikrofon izni yok");
+      throw new Error(mic.reason || "Microphone permission denied");
     }
 
     this.stream = await navigator.mediaDevices.getUserMedia({
@@ -100,13 +100,13 @@ export class VoskStt {
 
     this.listening = true;
     try {
-      this.onStatus?.("model", "Ses modeli hazırlanıyor…");
+      this.onStatus?.("model", "Preparing speech model…");
       const ready = await window.slideagent.ensureVoskModel(this.langKey);
-      if (!ready?.ok) throw new Error(ready?.reason || "Vosk modeli yok");
+      if (!ready?.ok) throw new Error(ready?.reason || "Vosk model missing");
       this.modelUrl = ready.fileUrl;
       await this.ensureRecognizer();
       if (this.ctx.state === "suspended") await this.ctx.resume();
-      this.onStatus?.("listen", "Dinleniyor — konuşun");
+      this.onStatus?.("listen", "Listening — speak");
     } catch (err) {
       await this.stop();
       throw err;
@@ -124,7 +124,7 @@ export class VoskStt {
   }
 
   async ensureRecognizer() {
-    if (!this.modelUrl) throw new Error("Vosk model URL yok");
+    if (!this.modelUrl) throw new Error("Vosk model URL missing");
     let model = modelCache.get(this.modelUrl);
     if (!model) {
       try {

@@ -970,17 +970,8 @@ export function pickBestTranscript(texts) {
   return { text: list[0] || "", cmd: null };
 }
 
-export function describeCommand(cmd, language = "tr") {
-  if (!cmd) return language === "tr" ? "Komut yok" : "No command";
-  const tr = {
-    next: "İleri",
-    prev: "Geri",
-    first: "Başa git",
-    last: "Sona git",
-    start: "Gösteriyi başlat",
-    stop: "Gösteriyi bitir",
-    goto: `Slayt ${cmd.index}`,
-  };
+export function describeCommand(cmd, _language = "en") {
+  if (!cmd) return "No command";
   const en = {
     next: "Next",
     prev: "Previous",
@@ -990,5 +981,5 @@ export function describeCommand(cmd, language = "tr") {
     stop: "End slideshow",
     goto: `Slide ${cmd.index}`,
   };
-  return (language === "tr" ? tr : en)[cmd.type] ?? cmd.type;
+  return en[cmd.type] ?? cmd.type;
 }

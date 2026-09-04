@@ -44,7 +44,7 @@ export function modelReady(userData, key) {
 
 async function downloadFile(url, dest, onProgress) {
   const res = await fetch(url, { redirect: "follow" });
-  if (!res.ok) throw new Error(`İndirme başarısız: ${res.status} ${url}`);
+  if (!res.ok) throw new Error(`Download failed: ${res.status} ${url}`);
   const total = Number(res.headers.get("content-length")) || 0;
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   const file = fs.createWriteStream(dest);
@@ -71,7 +71,7 @@ export async function ensureVoskModel(userData, language, onProgress) {
   const key = voskLangKey(language);
   if (!key) return { ok: false, reason: "no-model" };
   if (modelReady(userData, key)) {
-    onProgress?.(100, "Model hazır");
+    onProgress?.(100, "Model ready");
     return { ok: true, key, fileUrl: `slideagent://vosk/${key}/model.tar.gz` };
   }
 
@@ -80,14 +80,14 @@ export async function ensureVoskModel(userData, language, onProgress) {
   const zipPath = path.join(dir, `${spec.id}.zip`);
   const rawDir = path.join(dir, "raw");
   fs.mkdirSync(dir, { recursive: true });
-  onProgress?.(2, "Ses modeli indiriliyor…");
+  onProgress?.(2, "Downloading speech model…");
   await downloadFile(spec.url, zipPath, onProgress);
-  onProgress?.(88, "Model açılıyor…");
+  onProgress?.(88, "Extracting model…");
   rmrf(rawDir);
   unzipTo(zipPath, rawDir);
   const root = findModelRoot(rawDir);
   const tar = modelTarPath(userData, key);
-  onProgress?.(94, "Model hazırlanıyor…");
+  onProgress?.(94, "Preparing model…");
   await tarGzipDir(root, tar);
   fs.writeFileSync(path.join(dir, "meta.json"), JSON.stringify({ id: spec.id }, null, 2));
   try {
@@ -96,6 +96,6 @@ export async function ensureVoskModel(userData, language, onProgress) {
     /* ignore */
   }
   rmrf(rawDir);
-  onProgress?.(100, "Model hazır");
+  onProgress?.(100, "Model ready");
   return { ok: true, key, fileUrl: `slideagent://vosk/${key}/model.tar.gz` };
 }

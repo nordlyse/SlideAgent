@@ -11,7 +11,7 @@ function findEocd(buf) {
   for (let i = buf.length - 22; i >= min; i -= 1) {
     if (buf.readUInt32LE(i) === EOCD_SIG) return i;
   }
-  throw new Error("ZIP: EOCD bulunamadı");
+  throw new Error("ZIP: EOCD not found");
 }
 
 function readName(buf, offset, length) {
@@ -30,7 +30,7 @@ export function unzipTo(zipPath, destDir) {
   const written = [];
 
   for (let n = 0; n < count; n += 1) {
-    if (buf.readUInt32LE(cdOffset) !== CENTRAL_SIG) throw new Error("ZIP: bozuk merkezi dizin");
+    if (buf.readUInt32LE(cdOffset) !== CENTRAL_SIG) throw new Error("ZIP: corrupt central directory");
     const method = buf.readUInt16LE(cdOffset + 10);
     const compSize = buf.readUInt32LE(cdOffset + 20);
     const nameLen = buf.readUInt16LE(cdOffset + 28);
@@ -43,7 +43,7 @@ export function unzipTo(zipPath, destDir) {
     if (!name || name.endsWith("/") || name.includes("..")) continue;
     if (name.startsWith("__MACOSX/") || name.endsWith(".DS_Store")) continue;
 
-    if (buf.readUInt32LE(localOff) !== LOCAL_SIG) throw new Error(`ZIP: bozuk girdi ${name}`);
+    if (buf.readUInt32LE(localOff) !== LOCAL_SIG) throw new Error(`ZIP: corrupt entry ${name}`);
     const localNameLen = buf.readUInt16LE(localOff + 26);
     const localExtraLen = buf.readUInt16LE(localOff + 28);
     const dataStart = localOff + 30 + localNameLen + localExtraLen;
@@ -51,7 +51,7 @@ export function unzipTo(zipPath, destDir) {
     let out;
     if (method === 0) out = compressed;
     else if (method === 8) out = zlib.inflateRawSync(compressed);
-    else throw new Error(`ZIP: sıkıştırma ${method} desteklenmiyor (${name})`);
+    else throw new Error(`ZIP: compression ${method} not supported (${name})`);
 
     const dest = path.join(destDir, name);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -145,7 +145,7 @@ export function findModelRoot(extractedDir) {
     }
   }
   walk(extractedDir);
-  if (match.length === 0) throw new Error("Vosk modeli (am/final.mdl) zip içinde yok");
+  if (match.length === 0) throw new Error("Vosk model (am/final.mdl) not found in zip");
   match.sort((a, b) => a.length - b.length);
   return match[0];
 }

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,44 +12,44 @@
         <img src="./assets/icon.png" alt="" width="36" height="36" />
         <div>
           <h1>SlideAgent</h1>
-          <p class="tag">Speech to Text ile slayt yönetimi</p>
+          <p class="tag">Voice control for PowerPoint / Impress</p>
         </div>
       </div>
       <label class="switch">
         <input id="listen" type="checkbox" />
-        <span>Dinle</span>
+        <span>Listen</span>
       </label>
     </header>
 
     <section class="panel status-panel">
-      <p id="status" data-kind="idle">Hazırlanıyor…</p>
+      <p id="status" data-kind="idle">Starting…</p>
       <dl>
-        <div><dt>Mikrofon</dt><dd><span class="meter" aria-hidden="true"><span id="meterBar"></span></span> <span id="meterLabel">kapalı</span></dd></div>
-        <div><dt>Duyulan</dt><dd id="heard">—</dd></div>
-        <div><dt>Komut</dt><dd id="action">—</dd></div>
-        <div><dt>Motor</dt><dd id="backend">—</dd></div>
+        <div><dt>Microphone</dt><dd><span class="meter" aria-hidden="true"><span id="meterBar"></span></span> <span id="meterLabel">off</span></dd></div>
+        <div><dt>Heard</dt><dd id="heard">—</dd></div>
+        <div><dt>Command</dt><dd id="action">—</dd></div>
+        <div><dt>Engine</dt><dd id="backend">—</dd></div>
       </dl>
     </section>
 
     <section class="panel">
       <label>
-        Dil
+        Language
         <select id="language"></select>
       </label>
       <label>
-        Sunum motoru
+        Presentation engine
         <select id="engine">
-          <option value="auto">Otomatik</option>
+          <option value="auto">Auto</option>
           <option value="powerpoint">PowerPoint API</option>
           <option value="impress">LibreOffice UNO</option>
-          <option value="keyboard">Klavye</option>
+          <option value="keyboard">Keyboard</option>
         </select>
       </label>
       <label>
-        Ses tanıma
+        Speech recognition
         <select id="stt">
           <option value="chrome">Speech to Text</option>
-          <option value="vosk">Vosk (çevrimdışı yedek)</option>
+          <option value="vosk">Vosk (offline fallback)</option>
         </select>
       </label>
       <p id="micHint" class="hint"></p>
@@ -57,21 +57,21 @@
 
     <section class="panel">
       <label class="grow">
-        Komutu yaz
+        Type a command
         <span class="row">
-          <input id="manual" type="text" placeholder="ileri, geri, başa git, 15. slayta git" />
-          <button id="send" type="button">Gönder</button>
+          <input id="manual" type="text" placeholder="next, back, first, go to slide 15" />
+          <button id="send" type="button">Send</button>
         </span>
       </label>
     </section>
 
     <section class="panel">
-      <h2>Son komutlar</h2>
+      <h2>Recent commands</h2>
       <ul id="log"></ul>
     </section>
 
     <footer>
-      <p id="examples">Örnekler: <code>ileri</code> <code>neste</code> <code>weiter</code> <code>siguiente</code> <code>下一张</code></p>
+      <p id="examples">Examples: <code>next</code> <code>neste</code> <code>weiter</code> <code>siguiente</code> <code>下一张</code></p>
     </footer>
     <script type="module" src="/src/renderer.js"></script>
   </body>

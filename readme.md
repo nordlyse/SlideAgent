@@ -1,143 +1,143 @@
 # SlideAgent
 
-Açık PowerPoint veya LibreOffice Impress sunumunu **sesinle** yönetir.
+Control an open PowerPoint or LibreOffice Impress slideshow **with your voice**.
 
-Mikrofon “ileri”, “geri”, “başa git”, “sona git”, “15. slayta git” dediğini duyunca, slayt gösterisindeki yerleşik API’yi (yoksa klavye kısayolunu) kullanır.
+When the microphone hears “next”, “back”, “go to the start”, “go to the end”, or “go to slide 15”, SlideAgent uses the presentation’s built-in API (or keyboard shortcuts if the API is unavailable).
 
-| İstediğin eylem | Söylenebilecekler | PowerPoint | LibreOffice Impress |
+| Action | Things you can say | PowerPoint | LibreOffice Impress |
 |---|---|---|---|
-| İleri | ileri, next, neste, weiter, siguiente, 下一张, 次へ | `SlideShowView.Next()` | `gotoNextEffect()` |
-| Geri | geri, previous, forrige, zurück, 上一张 | `Previous()` | `gotoPreviousEffect()` |
-| Başa | başa git, first, første, erste, 第一张 | `First()` | `gotoFirstSlide()` |
-| Sona | sona git, last, siste, letzte, 最后 | `Last()` | `gotoLastSlide()` |
-| Belirli slayt | 15. slayta git, go to slide 20, gå til lysbilde 15, 第15页 | `GotoSlide(n)` (1 tabanlı) | `gotoSlideIndex(n-1)` (0 tabanlı) |
+| Next | next, ileri, neste, weiter, siguiente, 下一张, 次へ | `SlideShowView.Next()` | `gotoNextEffect()` |
+| Previous | back, geri, forrige, zurück, 上一张 | `Previous()` | `gotoPreviousEffect()` |
+| First | first, başa git, første, erste, 第一张 | `First()` | `gotoFirstSlide()` |
+| Last | last, sona git, siste, letzte, 最后 | `Last()` | `gotoLastSlide()` |
+| Specific slide | go to slide 20, 15. slayta git, gå til lysbilde 15, 第15页 | `GotoSlide(n)` (1-based) | `gotoSlideIndex(n-1)` (0-based) |
 
-Windows’ta önce çalışan PowerPoint COM nesnesine bağlanır. macOS’ta PowerPoint AppleScript kullanılır. Her platformda LibreOffice UNO denenir. API yoksa slayt gösterisi kısayolları gönderilir (sağ/sol ok, Home/End, numara + Enter).
+On Windows it binds to a running PowerPoint COM object first. On macOS it uses PowerPoint AppleScript. LibreOffice UNO is tried on every platform. If no API is available, slideshow shortcuts are sent (right/left arrow, Home/End, number + Enter).
 
-## Paketler nerede?
+## Where are the packages?
 
-Kurulum dosyaları git deposunda **yok**. `.gitignore` içinde `release/` durur; her paketleme makinede yeniden üretilir.
+Installers are **not** in git. `release/` is gitignored; each package is built on the machine that runs the packager.
 
-Paketledikten sonra dosyalar proje kökündeki **`release/`** klasöründedir:
+After packaging, files are in the project-root **`release/`** folder:
 
-| Platform | Dosya | Ne işe yarar |
+| Platform | File | What it is |
 |---|---|---|
-| macOS | `SlideAgent-1.1.0-mac-x64.dmg` | Applications’a sürükle-bırak kurulum |
-| macOS | `SlideAgent-1.1.0-mac.zip` | `.app` arşivi |
-| Windows | `SlideAgent Setup 1.1.0.exe` | NSIS kurucu; masaüstü + Start Menu kısayolu |
-| Windows | `SlideAgent-1.1.0-win.zip` | Kurucusuz klasör (içinde `SlideAgent.exe`) |
-| Linux | `SlideAgent-1.1.0.AppImage` | Çalıştırılabilir tek dosya |
-| Linux | `slideagent_1.1.0_amd64.deb` | Debian / Ubuntu paketi |
+| macOS | `SlideAgent-1.1.1-mac-x64.dmg` | Drag-and-drop into Applications |
+| macOS | `SlideAgent-1.1.1-mac.zip` | `.app` archive |
+| Windows | `SlideAgent Setup 1.1.1.exe` | NSIS installer; desktop + Start Menu shortcut |
+| Windows | `SlideAgent-1.1.1-win.zip` | Portable folder (`SlideAgent.exe` inside) |
+| Linux | `SlideAgent-1.1.1.AppImage` | Single executable |
+| Linux | `slideagent_1.1.1_amd64.deb` | Debian / Ubuntu package |
 
-Sürüm numarası `package.json` içindeki `version` alanından gelir. Mimari, paketleyen bilgisayara göre değişir.
+The version number comes from `package.json`. Architecture follows the machine that built the package.
 
-## Kullanıcı olarak kurmak
+## Install as a user
 
-Pencereyi **X** ile kapatmak uygulamayı tamamen kapatır (tepsi / arka plan süreci kalmaz).
+Closing the window with **X** quits the app completely (no tray / background process).
 
-Sunumu **PowerPoint** veya **LibreOffice Impress** ile aç, slayt gösterisini başlat, sonra SlideAgent’ta **Dinle** anahtarını aç. Speech to Text SlideAgent penceresindedir; ayrı bir tarayıcı sayfası açılmaz.
+Open the deck in **PowerPoint** or **LibreOffice Impress**, start the slideshow, then turn **Listen** on in SlideAgent. Speech to Text runs in the SlideAgent window; a separate browser page is not shown.
 
 ### macOS
 
-1. `release/SlideAgent-1.1.0-mac-x64.dmg` dosyasını aç.
-2. **SlideAgent** uygulamasını **Applications** klasörüne sürükle.
-3. İlk açılışta Gatekeeper “tanınmayan geliştirici” diyebilir: **Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç**.
-4. Mikrofon izni isteyecek. AppleScript / erişilebilirlik izni, klavye yedek yolu için gerekebilir.
+1. Open `release/SlideAgent-1.1.1-mac-x64.dmg`.
+2. Drag **SlideAgent** into **Applications**.
+3. Gatekeeper may say the developer is unidentified: **System Settings → Privacy & Security → Open Anyway**.
+4. It will ask for microphone access. AppleScript / accessibility permission may be needed for the keyboard fallback.
 
-Paket imzasızdır (Developer ID yok).
+The package is unsigned (no Developer ID).
 
 ### Windows
 
-1. `SlideAgent Setup 1.1.0.exe` çalıştır, kurulum sihirbazını bitir.
-2. Masaüstünde ve Başlat menüsünde **SlideAgent** kısayolu oluşur.
-3. Alternatif: `SlideAgent-1.1.0-win.zip` dosyasını açıp `SlideAgent.exe` çalıştır.
+1. Run `SlideAgent Setup 1.1.1.exe` and finish the wizard.
+2. A **SlideAgent** shortcut is created on the desktop and in the Start menu.
+3. Alternatively unzip `SlideAgent-1.1.1-win.zip` and run `SlideAgent.exe`.
 
-SmartScreen uyarı verebilir; yerel derleme olduğu için imza yoktur. PowerPoint’in açık olması COM yolu için yeterlidir.
+SmartScreen may warn because the build is local and unsigned. PowerPoint must be open for the COM path.
 
 ### Linux
 
-- **AppImage:** `chmod +x SlideAgent-1.1.0.AppImage && ./SlideAgent-1.1.0.AppImage`
-- **deb:** `sudo dpkg -i slideagent_1.1.0_amd64.deb` (gerekirse `sudo apt -f install`)
+- **AppImage:** `chmod +x SlideAgent-1.1.1.AppImage && ./SlideAgent-1.1.1.AppImage`
+- **deb:** `sudo dpkg -i slideagent_1.1.1_amd64.deb` (then `sudo apt -f install` if needed)
 
-LibreOffice UNO için Impress’i şöyle açmak en temiz yoldur:
+The cleanest LibreOffice UNO setup is to start Impress like this:
 
 ```bash
 soffice --accept="socket,host=127.0.0.1,port=2002;urp;"
 ```
 
-Klavye yedeği için [xdotool](https://github.com/jordansissel/xdotool) (MIT) önerilir: `sudo apt install xdotool`.
+For the keyboard fallback, [xdotool](https://github.com/jordansissel/xdotool) (MIT) is recommended: `sudo apt install xdotool`.
 
-## Ses tanıma
+## Speech recognition
 
-K-PrimeApp **Speech to Text** sayfası Whisper değil; Chrome’daki **`webkitSpeechRecognition`** (Google Web Speech). Bu motor milisaniyede ve Türkçe’de iyidir — ama **yalnızca gerçek Chrome / Edge** içinde çalışır. Electron Chromium’unda Google konuşma anahtarı yoktur.
+K-PrimeApp **Speech to Text** is not Whisper. It is Chrome **`webkitSpeechRecognition`** (Google Web Speech). That engine is fast and works well — but **only in real Chrome / Edge**. Electron Chromium has no Google speech key.
 
-**Varsayılan** Speech to Text, K-PrimeApp ile aynı Google Web Speech motorudur ama arayüz SlideAgent içindedir. Chrome arka planda (ekran dışında) çalışır; **Dinle** dışında bir sayfa görmezsiniz. macOS mikrofon menüsünde hâlâ Chrome yazabilir çünkü motor odur; Dinle kapanınca süreç de kapanır.
+**Default** Speech to Text uses that same Google Web Speech engine, with the UI inside SlideAgent. Chrome runs in the background (off-screen); you do not see a separate page. The macOS microphone menu may still say Chrome, because that process holds the mic. Turning Listen off quits it.
 
-1. **Speech to Text** — varsayılan, SlideAgent penceresinde. Google Chrome veya Edge kurulu olmalı.
-2. **Vosk** — Chrome yoksa çevrimdışı yedek.
+1. **Speech to Text** — default, in the SlideAgent window. Google Chrome or Edge must be installed.
+2. **Vosk** — offline fallback if Chrome is missing.
 
-Whisper artık seçenek değildir; kısa Türkçe komutları uydurur.
+Whisper is no longer an option; it hallucinates short commands.
 
-Dil menüsünden konuşma dili seçilir (`tr-TR` K-PrimeApp ile aynı). Desteklenen diller:
+Pick the spoken language from the language menu (`tr-TR` matches K-PrimeApp Turkish). Supported languages:
 
-İngilizce, Norveççe, İsveççe, Türkçe, Çince, Japonca, Danca, Hintçe, Almanca, Hollandaca, İzlandaca, İsviçre Almancası (Schweizerdeutsch), Fransızca, Portekizce, İspanyolca.
+English, Norwegian, Swedish, Turkish, Chinese, Japanese, Danish, Hindi, German, Dutch, Icelandic, Swiss German, French, Portuguese, Spanish.
 
-Komut çözümleyici tüm bu dillerdeki “ileri / geri / başa / sona / 15. slayt” karşılıklarını aynı anda anlar.
+The command parser understands “next / back / first / last / go to slide 15” in all of those languages at once.
 
-Komut sayılmazsa slayt değişmez: “bu slaytta ileri teknoloji…” gibi cümleler yok sayılır.
+Ordinary speech that is not a command does not change the slide: sentences like “this slide shows advanced technology…” are ignored.
 
-1.0.0–1.0.9 paketlerini kullanmayın; **1.1.0** Speech to Text’i SlideAgent penceresine taşır.
+Do not use 1.0.0–1.1.0 packages; **1.1.1** is the English UI.
 
-Metin kutusundan da aynı komutlar gönderilebilir.
+The same commands can be typed in the text box.
 
-## Geliştirici olarak çalıştırmak
+## Run as a developer
 
 ```bash
-git clone <bu-repo>
+git clone <this-repo>
 cd SlideAgent
 npm install
 npm test
 npm run desktop
 ```
 
-`npm run desktop` Vite’ı (`http://localhost:5173`) ve Electron’u açar.
+`npm run desktop` starts Vite (`http://localhost:5173`) and Electron.
 
-## Paketleri yeniden üretmek
+## Rebuild packages
 
 ```bash
 npm install
 npm run dist
 ```
 
-Tek platform:
+One platform:
 
 ```bash
 npm run dist:mac     # DMG + zip
 npm run dist:linux   # AppImage + deb
-npm run dist:win     # NSIS kurucu + zip (x64)
+npm run dist:win     # NSIS installer + zip (x64)
 ```
 
-Ayar dosyası: `electron-builder.yml`. Çıktı klasörü: `release/`. Windows `.ico` üretimi macOS’ta `sips` kullanır (`npm run build:ico`).
+Config file: `electron-builder.yml`. Output folder: `release/`. Windows `.ico` generation uses `sips` on macOS (`npm run build:ico`).
 
-## Lisanslar
+## Licenses
 
-SlideAgent **MIT**. Bağımlılıklar yalnızca MIT veya Apache-2.0:
+SlideAgent is **MIT**. Dependencies are MIT or Apache-2.0 only:
 
-| Araç | Lisans | Rol |
+| Tool | License | Role |
 |---|---|---|
-| Electron | MIT | Masaüstü kabuk |
+| Electron | MIT | Desktop shell |
 | electron-builder | MIT | dmg / nsis / AppImage / deb |
-| Vite | MIT | Arayüz paketi |
-| `@huggingface/transformers` | Apache-2.0 | Whisper tiny (yedek STT) |
-| OpenAI Whisper ağırlıkları | MIT | Dil modeli (yedek) |
-| vosk-browser | Apache-2.0 | Akan çevrimdışı STT |
-| Vosk dil modelleri (Alphacephei) | Apache-2.0 | İlk dinlemede indirilir |
-| Web Speech API (K-PrimeApp SpeechToText) | tarayıcı API’si | Chrome/Edge’de asıl STT |
-| xdotool (isteğe bağlı, Linux) | MIT | Klavye yedeği |
+| Vite | MIT | UI bundle |
+| `@huggingface/transformers` | Apache-2.0 | Whisper tiny (fallback STT) |
+| OpenAI Whisper weights | MIT | Language model (fallback) |
+| vosk-browser | Apache-2.0 | Streaming offline STT |
+| Vosk language models (Alphacephei) | Apache-2.0 | Downloaded on first listen |
+| Web Speech API (K-PrimeApp SpeechToText) | browser API | Primary STT in Chrome/Edge |
+| xdotool (optional, Linux) | MIT | Keyboard fallback |
 
-PowerPoint COM, AppleScript ve LibreOffice UNO, zaten kurulu ofis uygulamasının API’sidir; bu repoya gömülmez.
+PowerPoint COM, AppleScript, and LibreOffice UNO are APIs of office software the user already installed; they are not bundled in this repo.
 
-Ayrıntı: [THIRD_PARTY.md](THIRD_PARTY.md).
+Details: [THIRD_PARTY.md](THIRD_PARTY.md).
 
 ## Author
 

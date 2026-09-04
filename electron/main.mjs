@@ -135,9 +135,9 @@ function rebuildTray() {
   const menu = Menu.buildFromTemplate([
     { label: "SlideAgent", enabled: false },
     { type: "separator" },
-    { label: "Pencereyi göster", click: () => createWindow() },
+    { label: "Show window", click: () => createWindow() },
     {
-      label: cfg.listening ? "Dinlemeyi durdur" : "Dinlemeyi başlat",
+      label: cfg.listening ? "Stop listening" : "Start listening",
       click: () => {
         const next = { ...loadConfig(), listening: !loadConfig().listening };
         saveConfig(next);
@@ -147,7 +147,7 @@ function rebuildTray() {
     },
     { type: "separator" },
     {
-      label: "Açılışta başlat",
+      label: "Open at login",
       type: "checkbox",
       checked: cfg.openAtLogin,
       click: (item) => {
@@ -199,7 +199,7 @@ async function ensureMicrophone() {
       ok: false,
       status: current,
       reason:
-        "Mikrofon izni kapalı. Sistem Ayarları → Gizlilik ve Güvenlik → Mikrofon içinde SlideAgent (geliştirmede Electron) açık olmalı.",
+        "Microphone access is off. Enable SlideAgent (or Electron while developing) in System Settings → Privacy & Security → Microphone.",
     };
   }
   const granted = await systemPreferences.askForMediaAccess("microphone");
@@ -209,7 +209,7 @@ async function ensureMicrophone() {
     status,
     reason: granted
       ? null
-      : "Mikrofon izni verilmedi. Sistem Ayarları → Gizlilik ve Güvenlik → Mikrofon.",
+      : "Microphone permission was not granted. System Settings → Privacy & Security → Microphone.",
   };
 }
 
