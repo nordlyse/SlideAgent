@@ -1,0 +1,58 @@
+appId: com.nordlyse.slideagent
+productName: SlideAgent
+copyright: MIT
+asar: true
+npmRebuild: false
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - electron/**/*
+  - helpers/**/*
+  - assets/**/*
+  - package.json
+  - "!**/node_modules/**"
+asarUnpack:
+  - "**/*.wasm"
+extraResources:
+  - from: helpers
+    to: helpers
+mac:
+  category: public.app-category.productivity
+  icon: build/icon.png
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  extendInfo:
+    NSMicrophoneUsageDescription: SlideAgent listens for spoken slide commands such as next, previous, and go to slide 15.
+    NSAppleEventsUsageDescription: SlideAgent controls the open PowerPoint or LibreOffice presentation.
+    NSAccessibilityUsageDescription: SlideAgent may send keyboard shortcuts to the presentation window when the native API is unavailable.
+  target:
+    - dmg
+    - zip
+win:
+  icon: build/icon.ico
+  target:
+    - zip
+    - nsis
+linux:
+  icon: build/icon.png
+  category: Office
+  synopsis: Voice-controlled PowerPoint and LibreOffice slide agent
+  maintainer: nordlyse <nordlyse@users.noreply.github.com>
+  target:
+    - AppImage
+    - deb
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: SlideAgent
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  deleteAppDataOnUninstall: false
+dmg:
+  icon: build/icon.png
+  artifactName: "${productName}-${version}-mac-${arch}.${ext}"

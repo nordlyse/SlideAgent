@@ -1,0 +1,23 @@
+Soru: pptx ve odt (libre office) te powerpoint acildiginda ilgili uygulamalarin api si varmi ileri, geri, en basa, en ileri, 20.slayta, 23. slayta vb. git demek icin endpointler varmi?
+
+Cevap:
+Evet, her iki uygulamanın da sunum esnasında (Slayt Gösterisi modunda) ileri, geri, ilk, son veya belirli bir slayt numarasına (20, 23 vb.) gitmenizi sağlayan yerleşik API metotları mevcuttur. 
+
+Ancak bu yapılar web tabanlı klasik REST API (/api/next gibi HTTP endpointleri) yerine, yerel COM/Automation (Windows) veya UNO API (LibreOffice) protokollerini kullanır. Eğer bunları HTTP üzerinden tetiklemek isterseniz, bu API metotlarını çalıştıran çok küçük bir aracı yerel servis (Python, Node.js vb.) yazmanız gerekir.
+
+1. Microsoft PowerPoint (COM / Office Interop API)
+Windows üzerinde PowerPoint açıkken ve bir sunum yürütülüyorken, SlideShowView nesnesi üzerinden navigasyon sağlanır:
+- İleri Git: ActivePresentation.SlideShowWindow.View.Next()
+- Geri Git: ActivePresentation.SlideShowWindow.View.Previous()
+- En Başa Git: ActivePresentation.SlideShowWindow.View.First()
+- En Sona Git: ActivePresentation.SlideShowWindow.View.Last()
+- Belirli Slayta Git: ActivePresentation.SlideShowWindow.View.GotoSlide(Index)
+
+2. LibreOffice Impress (UNO API)
+LibreOffice, platform bağımsız UNO (Universal Network Objects) mimarisini kullanır. XSlideShowController arayüzü şu metotları sunar (0 tabanlıdır):
+- İleri Git: oController.gotoNextEffect()
+- Geri Git: oController.gotoPreviousEffect()
+- En Başa Git: oController.gotoFirstSlide()
+- En Sona Git: oController.gotoLastSlide()
+- Belirli Slayta Git: oController.gotoSlideIndex(index) (Örn: 23. slayt için 22 gönderilir)
+
