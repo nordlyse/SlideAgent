@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseCommand } from "./nlu.js";
+import { parseCommand, pickBestTranscript } from "./nlu.js";
 
 describe("parseCommand Turkish", () => {
   it("navigates forward and back", () => {
@@ -13,11 +13,23 @@ describe("parseCommand Turkish", () => {
 
   it("jumps to first and last", () => {
     assert.deepEqual(parseCommand("başa git"), { type: "first" });
+    assert.deepEqual(parseCommand("başa dön"), { type: "first" });
     assert.deepEqual(parseCommand("en başa"), { type: "first" });
     assert.deepEqual(parseCommand("ilk slayt"), { type: "first" });
     assert.deepEqual(parseCommand("sona git"), { type: "last" });
     assert.deepEqual(parseCommand("en sona"), { type: "last" });
     assert.deepEqual(parseCommand("son slayt"), { type: "last" });
+    assert.deepEqual(parseCommand("son slayta git"), { type: "last" });
+    assert.deepEqual(parseCommand("en başa dön"), { type: "first" });
+  });
+
+  it("accepts common Whisper misspellings", () => {
+    assert.deepEqual(parseCommand("elleri"), { type: "next" });
+    assert.deepEqual(parseCommand("sonra git"), { type: "last" });
+    assert.deepEqual(parseCommand("keri"), { type: "prev" });
+    assert.deepEqual(parseCommand("Leri"), { type: "next" });
+    assert.deepEqual(parseCommand("yeti"), { type: "prev" });
+    assert.deepEqual(parseCommand("boşa dön"), { type: "first" });
   });
 
   it("goes to a numbered slide", () => {
@@ -84,5 +96,13 @@ describe("parseCommand other languages", () => {
     assert.deepEqual(parseCommand("gå til lysbilde 15"), { type: "goto", index: 15 });
     assert.deepEqual(parseCommand("gehe zu Folie 8"), { type: "goto", index: 8 });
     assert.deepEqual(parseCommand("ga naar dia 4"), { type: "goto", index: 4 });
+  });
+});
+
+describe("pickBestTranscript", () => {
+  it("prefers a command alternative over a hallucination", () => {
+    const picked = pickBestTranscript(["Sonsunun çok güzel", "geri"]);
+    assert.deepEqual(picked.cmd, { type: "prev" });
+    assert.equal(picked.text, "geri");
   });
 });

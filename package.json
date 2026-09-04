@@ -1,6 +1,6 @@
 {
   "name": "slideagent",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "private": true,
   "description": "Voice-controlled agent for PowerPoint and LibreOffice Impress.",
   "license": "MIT",
@@ -8,21 +8,22 @@
   "repository": "https://github.com/nordlyse/SlideAgent",
   "type": "module",
   "main": "electron/main.mjs",
-  "author": "nordlyse <nordlyse@users.noreply.github.com>",
+  "author": "Jakob Lyse <jakob.lyse@gmail.com>",
   "scripts": {
     "start": "node scripts/desktop.mjs",
     "desktop": "node scripts/desktop.mjs",
     "dev": "vite",
     "build": "vite build",
     "build:ico": "node scripts/make-ico.mjs",
-    "test": "node --test src/nlu.test.js",
+    "test": "node --test src/nlu.test.js electron/archive.test.js electron/chrome-speech.test.js",
     "dist": "npm run build && npm run build:ico && electron-builder --mac --linux --win --publish never",
     "dist:mac": "npm run build && electron-builder --mac --publish never",
     "dist:linux": "npm run build && electron-builder --linux --publish never",
     "dist:win": "npm run build && npm run build:ico && electron-builder --win --x64 --publish never"
   },
   "dependencies": {
-    "@huggingface/transformers": "^3.5.1"
+    "@huggingface/transformers": "^3.5.1",
+    "vosk-browser": "^0.0.8"
   },
   "devDependencies": {
     "electron": "^33.2.1",

@@ -24,6 +24,7 @@
     <section class="panel status-panel">
       <p id="status" data-kind="idle">Hazırlanıyor…</p>
       <dl>
+        <div><dt>Mikrofon</dt><dd><span class="meter" aria-hidden="true"><span id="meterBar"></span></span> <span id="meterLabel">kapalı</span></dd></div>
         <div><dt>Duyulan</dt><dd id="heard">—</dd></div>
         <div><dt>Komut</dt><dd id="action">—</dd></div>
         <div><dt>Motor</dt><dd id="backend">—</dd></div>
@@ -47,9 +48,9 @@
       <label>
         Ses tanıma
         <select id="stt">
-          <option value="auto">Otomatik</option>
-          <option value="webspeech">Web Speech (Sosial Video)</option>
-          <option value="whisper">Whisper tiny (çevrimdışı)</option>
+          <option value="auto">K-PrimeApp (Chrome Web Speech)</option>
+          <option value="vosk">Vosk (çevrimdışı yedek)</option>
+          <option value="whisper">Whisper tiny (yedek)</option>
         </select>
       </label>
       <p id="micHint" class="hint"></p>

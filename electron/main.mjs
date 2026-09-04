@@ -1,8 +1,10 @@
-import { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, session, screen } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, session, screen, systemPreferences, protocol } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runSlideCommand } from "./control.mjs";
+import { ensureVoskModel, voskLangKey } from "./vosk-model.mjs";
+import { startChromeSpeech, stopChromeSpeech, findChrome } from "./chrome-speech.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEV_URL = process.env.SLIDEAGENT_URL || "http://localhost:5173";
@@ -12,6 +14,20 @@ let tray = null;
 let quitting = false;
 
 if (process.platform === "win32") app.setAppUserModelId("com.nordlyse.slideagent");
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "slideagent",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true,
+      bypassCSP: true,
+    },
+  },
+]);
 
 function iconFile(name) {
   return path.join(__dirname, "..", "assets", name);
@@ -94,13 +110,6 @@ function createWindow() {
       backgroundThrottling: false,
     },
   });
-  win.on("close", (e) => {
-    if (!quitting) {
-      e.preventDefault();
-      win.hide();
-      if (process.platform === "darwin") app.dock?.hide();
-    }
-  });
   win.on("closed", () => {
     win = null;
   });
@@ -168,6 +177,65 @@ function allowMicrophone() {
   });
 }
 
+async function ensureMicrophone() {
+  if (process.platform !== "darwin") return { ok: true, status: "granted" };
+  const current = systemPreferences.getMediaAccessStatus("microphone");
+  if (current === "granted") return { ok: true, status: current };
+  if (current === "denied") {
+    return {
+      ok: false,
+      status: current,
+      reason:
+        "Mikrofon izni kapalı. Sistem Ayarları → Gizlilik ve Güvenlik → Mikrofon içinde SlideAgent (geliştirmede Electron) açık olmalı.",
+    };
+  }
+  const granted = await systemPreferences.askForMediaAccess("microphone");
+  const status = systemPreferences.getMediaAccessStatus("microphone");
+  return {
+    ok: Boolean(granted) && status === "granted",
+    status,
+    reason: granted
+      ? null
+      : "Mikrofon izni verilmedi. Sistem Ayarları → Gizlilik ve Güvenlik → Mikrofon.",
+  };
+}
+
+function registerVoskProtocol() {
+  protocol.handle("slideagent", (request) => {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+          "Access-Control-Allow-Headers": "*",
+        },
+      });
+    }
+    const url = new URL(request.url);
+    if (url.hostname !== "vosk") return new Response("not found", { status: 404 });
+    const rel = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+    const root = path.join(app.getPath("userData"), "vosk");
+    const file = path.normalize(path.join(root, rel));
+    const rootResolved = path.resolve(root);
+    if (!file.startsWith(rootResolved + path.sep) && file !== rootResolved) {
+      return new Response("forbidden", { status: 403 });
+    }
+    if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
+      return new Response("not found", { status: 404 });
+    }
+    const data = fs.readFileSync(file);
+    return new Response(data, {
+      headers: {
+        "Content-Type": "application/gzip",
+        "Content-Length": String(data.length),
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=31536000",
+      },
+    });
+  });
+}
+
 function registerIpc() {
   ipcMain.handle("get-config", () => loadConfig());
   ipcMain.handle("set-config", (_e, patch) => {
@@ -177,6 +245,32 @@ function registerIpc() {
     return next;
   });
   ipcMain.handle("get-paths", () => ({ userData: app.getPath("userData") }));
+  ipcMain.handle("ensure-microphone", () => ensureMicrophone());
+  ipcMain.handle("ensure-vosk-model", async (e, lang) => {
+    const key = voskLangKey(lang) || lang;
+    try {
+      return await ensureVoskModel(app.getPath("userData"), key, (pct, label) => {
+        e.sender.send("vosk-progress", { pct, label });
+      });
+    } catch (err) {
+      return { ok: false, reason: String(err?.message ?? err) };
+    }
+  });
+  ipcMain.handle("chrome-available", () => {
+    const browser = findChrome();
+    return { ok: Boolean(browser), browser };
+  });
+  ipcMain.handle("start-chrome-speech", async (_e, opts) => {
+    return startChromeSpeech({
+      lang: opts?.language || "tr-TR",
+      transcript: (payload) => win?.webContents.send("chrome-transcript", payload),
+      closed: () => win?.webContents.send("chrome-closed"),
+    });
+  });
+  ipcMain.handle("stop-chrome-speech", () => {
+    stopChromeSpeech();
+    return { ok: true };
+  });
   ipcMain.handle("slide-command", async (_e, cmd) => {
     const cfg = loadConfig();
     try {
@@ -189,6 +283,7 @@ function registerIpc() {
 
 app.whenReady().then(async () => {
   if (!app.isPackaged) await waitForVite(DEV_URL);
+  registerVoskProtocol();
   allowMicrophone();
   registerIpc();
   const cfg = loadConfig();
@@ -203,7 +298,7 @@ app.on("before-quit", () => {
 });
 
 app.on("window-all-closed", () => {
-  /* stay in tray */
+  quitApp();
 });
 
 app.on("activate", () => {

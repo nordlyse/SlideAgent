@@ -1,9 +1,9 @@
 const TARGET_RATE = 16000;
-const SILENCE_MS = 650;
-const MIN_SPEECH_MS = 280;
-const MAX_UTTERANCE_MS = 6000;
-const RMS_START = 0.018;
-const RMS_KEEP = 0.009;
+const SILENCE_MS = 180;
+const MIN_SPEECH_MS = 140;
+const MAX_UTTERANCE_MS = 4000;
+const RMS_START = 0.008;
+const RMS_KEEP = 0.0035;
 
 function rms(buf) {
   let sum = 0;
@@ -14,7 +14,7 @@ function rms(buf) {
 function downsample(input, fromRate) {
   if (fromRate === TARGET_RATE) return input;
   const ratio = fromRate / TARGET_RATE;
-  const length = Math.round(input.length / ratio);
+  const length = Math.max(1, Math.round(input.length / ratio));
   const out = new Float32Array(length);
   for (let i = 0; i < length; i += 1) {
     const start = Math.round(i * ratio);
@@ -31,9 +31,10 @@ function downsample(input, fromRate) {
 }
 
 export class WhisperStt {
-  constructor({ onTranscript, onStatus, language }) {
+  constructor({ onTranscript, onStatus, onLevel, language }) {
     this.onTranscript = onTranscript;
     this.onStatus = onStatus;
+    this.onLevel = onLevel;
     this.language = language || "tr";
     this.worker = null;
     this.ready = false;
@@ -41,32 +42,70 @@ export class WhisperStt {
     this.ctx = null;
     this.source = null;
     this.processor = null;
+    this.sink = null;
     this.stream = null;
     this.pending = [];
     this.speaking = false;
     this.silenceAt = 0;
     this.speechAt = 0;
     this.nextId = 1;
+    this.busy = false;
+    this.levelTimer = 0;
+    this.lastRms = 0;
   }
 
   async start() {
     if (this.listening) return;
-    this.onStatus?.("model", "Whisper hazırlanıyor…");
-    await this.ensureWorker();
+    const mic = await window.slideagent?.ensureMicrophone?.();
+    if (mic && mic.ok === false) {
+      throw new Error(mic.reason || "Mikrofon izni yok");
+    }
+
     this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+      },
     });
-    this.ctx = new AudioContext();
+
+    try {
+      this.ctx = new AudioContext({ sampleRate: TARGET_RATE });
+    } catch {
+      this.ctx = new AudioContext();
+    }
+    if (this.ctx.state === "suspended") await this.ctx.resume();
+
     this.source = this.ctx.createMediaStreamSource(this.stream);
     this.processor = this.ctx.createScriptProcessor(4096, 1, 1);
-    this.processor.onaudioprocess = (ev) => this.onAudio(ev.inputBuffer.getChannelData(0), this.ctx.sampleRate);
-    const mute = this.ctx.createGain();
-    mute.gain.value = 0;
+    this.sink = this.ctx.createMediaStreamDestination();
+    this.processor.onaudioprocess = (ev) => {
+      const input = ev.inputBuffer.getChannelData(0);
+      this.onAudio(input, this.ctx.sampleRate);
+    };
     this.source.connect(this.processor);
-    this.processor.connect(mute);
-    mute.connect(this.ctx.destination);
+    this.processor.connect(this.sink);
+    this.keepAlive = this.ctx.createGain();
+    this.keepAlive.gain.value = 0.0001;
+    this.processor.connect(this.keepAlive);
+    this.keepAlive.connect(this.ctx.destination);
+
     this.listening = true;
-    this.onStatus?.("listen", "Dinleniyor (Whisper)");
+    this.onStatus?.("listen", "Mikrofon açık, Whisper yükleniyor…");
+    await this.ensureWorker();
+    if (this.ctx.state === "suspended") await this.ctx.resume();
+    this.onStatus?.("listen", "Dinleniyor (Whisper) — konuşun, bitince durun");
+  }
+
+  async resume() {
+    if (this.ctx && this.ctx.state === "suspended") {
+      try {
+        await this.ctx.resume();
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   async ensureWorker() {
@@ -99,26 +138,33 @@ export class WhisperStt {
       return;
     }
     if (msg.type === "transcript") {
+      this.busy = false;
       const text = String(msg.text ?? "").trim();
       if (text) this.onTranscript?.(text);
-      else if (msg.error) this.onStatus?.("error", msg.error);
+      else this.onTranscript?.("", msg.error || "empty");
+      if (this.listening && this.ready) this.onStatus?.("listen", "Dinleniyor (Whisper)");
     }
   }
 
   onAudio(channel, sampleRate) {
-    if (!this.listening || !this.ready) return;
-    const level = rms(channel);
+    if (!this.listening) return;
+    const copy = new Float32Array(channel);
+    const level = rms(copy);
+    this.lastRms = level;
+    this.onLevel?.(level);
+
+    if (!this.ready || this.busy) return;
     const now = performance.now();
     if (!this.speaking) {
       if (level >= RMS_START) {
         this.speaking = true;
         this.speechAt = now;
         this.silenceAt = 0;
-        this.pending = [downsample(new Float32Array(channel), sampleRate)];
+        this.pending = [downsample(copy, sampleRate)];
       }
       return;
     }
-    this.pending.push(downsample(new Float32Array(channel), sampleRate));
+    this.pending.push(downsample(copy, sampleRate));
     if (level < RMS_KEEP) {
       if (!this.silenceAt) this.silenceAt = now;
       if (now - this.silenceAt >= SILENCE_MS) this.flush();
@@ -129,7 +175,7 @@ export class WhisperStt {
   }
 
   flush() {
-    if (!this.speaking) return;
+    if (!this.speaking || this.busy) return;
     const duration = performance.now() - this.speechAt;
     const chunks = this.pending;
     this.pending = [];
@@ -138,12 +184,14 @@ export class WhisperStt {
     if (duration < MIN_SPEECH_MS || !chunks.length) return;
     let len = 0;
     for (const c of chunks) len += c.length;
-    const audio = new Float32Array(len);
+    const merged = new Float32Array(len);
     let o = 0;
     for (const c of chunks) {
-      audio.set(c, o);
+      merged.set(c, o);
       o += c.length;
     }
+    const audio = merged;
+    this.busy = true;
     const id = this.nextId++;
     this.worker.postMessage({ type: "transcribe", id, audio, language: this.language }, [audio.buffer]);
     this.onStatus?.("busy", "Çözülüyor…");
@@ -152,7 +200,9 @@ export class WhisperStt {
   async stop() {
     this.listening = false;
     this.speaking = false;
+    this.busy = false;
     this.pending = [];
+    this.onLevel?.(0);
     try {
       this.processor?.disconnect();
     } catch {
@@ -165,6 +215,8 @@ export class WhisperStt {
     }
     this.processor = null;
     this.source = null;
+    this.sink = null;
+    this.keepAlive = null;
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
     if (this.ctx) {

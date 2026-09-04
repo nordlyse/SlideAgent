@@ -432,6 +432,8 @@ const GO_WORDS = new Set([
 const NEXT = new Set([
   "ileri",
   "ileriye",
+  "elleri",
+  "illeri",
   "sonraki",
   "devam",
   "next",
@@ -480,6 +482,11 @@ const NEXT = new Set([
 const PREV = new Set([
   "geri",
   "geriye",
+  "gerigel",
+  "keri",
+  "gery",
+  "gerri",
+  "gerry",
   "onceki",
   "previous",
   "back",
@@ -512,6 +519,7 @@ const PREV = new Set([
 
 const FIRST = new Set([
   "basa",
+  "basadon",
   "ilk",
   "first",
   "beginning",
@@ -547,6 +555,7 @@ const FIRST = new Set([
 
 const LAST = new Set([
   "sona",
+  "sonagit",
   "son",
   "last",
   "end",
@@ -580,6 +589,9 @@ const LAST = new Set([
 
 const EXTRA = new Set([
   "slayt",
+  "slayta",
+  "slaytin",
+  "slaytta",
   "slide",
   "git",
   "gidin",
@@ -746,7 +758,8 @@ function isPrev(tokens) {
 
 function isFirst(tokens) {
   const joined = tokens.join(" ");
-  if (/^(en\s+)?basa(\s+(git|gidin|don))?$/.test(joined)) return true;
+  if (/^(en\s+)?basa(\s+(git|gidin|don|donun|donelim|gel))?$/.test(joined)) return true;
+  if (/^(basa|ilk)(\s+slayt)?(\s+(git|don))?$/.test(joined)) return true;
   if (/^go\s+to\s+(the\s+)?(first|beginning|start)(\s+slide)?$/.test(joined)) return true;
   if (/^(ga|gehe|va|ve|fara|aller)\s+(naar|zu|a|ao|á|till|til)?\s*(de\s+|het\s+|la\s+|el\s+|o\s+)?(eerste|erste|premiere|premier|primeira|primera|fyrsta|forste|forsta)/.test(joined))
     return true;
@@ -756,7 +769,9 @@ function isFirst(tokens) {
 
 function isLast(tokens) {
   const joined = tokens.join(" ");
-  if (/^(en\s+)?sona(\s+(git|gidin|don))?$/.test(joined)) return true;
+  if (/^(en\s+)?sona(\s+(git|gidin|don|gel))?$/.test(joined)) return true;
+  if (/^(en\s+)?sonra(\s+git)$/.test(joined)) return true;
+  if (/^(en\s+)?son(\s+)?(slayt|slayta|slaytin|sayfa|sayfaya)(\s+(git|gidin|don|gel))?$/.test(joined)) return true;
   if (/^go\s+to\s+(the\s+)?(last|end)(\s+slide)?$/.test(joined)) return true;
   const rest = restAfter(tokens, EXTRA);
   return rest.length === 1 && LAST.has(rest[0]);
@@ -809,6 +824,60 @@ function parseCjkCommand(raw) {
   return null;
 }
 
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const row = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i += 1) {
+    let prev = i - 1;
+    row[0] = i;
+    for (let j = 1; j <= b.length; j += 1) {
+      const cur = row[j];
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + cost);
+      prev = cur;
+    }
+  }
+  return row[b.length];
+}
+
+/** Whisper-tiny often misspells short Turkish commands. */
+const COMPACT_COMMANDS = [
+  { type: "next", keys: ["ileri", "ilerigit", "ileriye", "elleri", "illeri", "ilari", "leri", "next"] },
+  { type: "prev", keys: ["geri", "gerigit", "gerigel", "geriye", "keri", "gerri", "gerry", "gery", "kery", "gitti", "yeti", "yetti", "previous", "back"] },
+  { type: "first", keys: ["basa", "basagit", "basadon", "enbasa", "enbasadon", "enbasagit", "basladon", "bosadon", "pasadon", "ilkslayt"] },
+  { type: "last", keys: ["sona", "sonagit", "ensona", "ensonagit", "sonragit", "sonnagit", "sonslayt", "sonslaytagit"] },
+];
+
+function matchSpokenAlias(text, wordCount) {
+  if (wordCount > 4) return null;
+  const compact = text.replace(/\s+/g, "");
+  if (compact.length < 3 || compact.length > 16) return null;
+  for (const row of COMPACT_COMMANDS) {
+    if (row.keys.includes(compact)) return { type: row.type };
+  }
+  let best = null;
+  let bestDist = 99;
+  let ties = false;
+  for (const row of COMPACT_COMMANDS) {
+    for (const key of row.keys) {
+      const max = key.length <= 4 ? 1 : 1;
+      const d = levenshtein(compact, key);
+      if (d === 0 || d > max) continue;
+      if (d < bestDist) {
+        best = row.type;
+        bestDist = d;
+        ties = false;
+      } else if (d === bestDist && best !== row.type) {
+        ties = true;
+      }
+    }
+  }
+  if (ties || best == null) return null;
+  return { type: best };
+}
+
 /**
  * @param {string} raw
  * @returns {{ type: 'next'|'prev'|'first'|'last'|'goto'|'start'|'stop', index?: number } | null}
@@ -821,6 +890,9 @@ export function parseCommand(raw) {
   if (!text) return null;
   const words = text.split(" ");
   if (words.length > 12) return null;
+
+  const alias = matchSpokenAlias(text, words.length);
+  if (alias) return alias;
 
   const tokens = tokensWithoutFiller(words);
   if (tokens.length === 0) return null;
@@ -838,6 +910,20 @@ export function parseCommand(raw) {
   }
 
   return null;
+}
+
+/** Prefer the first candidate that parses as a slide command. */
+export function pickBestTranscript(texts) {
+  const list = [];
+  for (const raw of Array.isArray(texts) ? texts : [texts]) {
+    const t = String(raw ?? "").trim();
+    if (t) list.push(t);
+  }
+  for (const t of list) {
+    const cmd = parseCommand(t);
+    if (cmd) return { text: t, cmd };
+  }
+  return { text: list[0] || "", cmd: null };
 }
 
 export function describeCommand(cmd, language = "tr") {
