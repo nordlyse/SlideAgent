@@ -13,7 +13,7 @@ self.onmessage = async (event) => {
   const msg = event.data || {};
   if (msg.type === "init") {
     try {
-      self.postMessage({ type: "progress", pct: 4, label: "Whisper yükleniyor…" });
+      self.postMessage({ type: "progress", pct: 4, label: "Loading Whisper…" });
       asr = await pipeline("automatic-speech-recognition", "Xenova/whisper-tiny", {
         dtype: "q8",
         progress_callback: (p) => {

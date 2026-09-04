@@ -34,10 +34,6 @@ let vosk = null;
 let busy = false;
 let lastFired = { key: "", at: 0 };
 
-function t(tr, en) {
-  return config.language === "en" ? en : tr;
-}
-
 function setStatus(kind, text) {
   ui.status.dataset.kind = kind;
   ui.status.textContent = text;
@@ -67,7 +63,7 @@ function updateExamples() {
   if (el) {
     const bits = row.example.split(/[·,]/).map((s) => s.trim()).filter(Boolean).slice(0, 4);
     el.replaceChildren(
-      document.createTextNode("Örnekler: "),
+      document.createTextNode("Examples: "),
       ...bits.flatMap((bit, i) => {
         const code = document.createElement("code");
         code.textContent = bit;
@@ -99,7 +95,7 @@ function setMicLevel(level) {
   const pct = Math.max(0, Math.min(100, Math.round(Math.sqrt(level) * 280)));
   if (ui.meterBar) ui.meterBar.style.width = `${pct}%`;
   if (ui.meterLabel) {
-    ui.meterLabel.textContent = level <= 0.0005 ? t("sessiz — konuşun", "silent — speak") : t("ses var", "audio in");
+    ui.meterLabel.textContent = level <= 0.0005 ? "silent — speak" : "audio in";
   }
 }
 
@@ -120,7 +116,7 @@ async function handleTranscript(text, { live = false, alternatives = [] } = {}) 
   const heard = picked.text || String(text ?? "").trim();
   if (!heard) {
     if (live) return;
-    const empty = t("(anlaşılamadı — daha net söyleyin)", "(not recognized — speak more clearly)");
+    const empty = "(not recognized — speak more clearly)";
     ui.heard.textContent = empty;
     addLog(`• ${empty}`);
     return;
@@ -130,7 +126,7 @@ async function handleTranscript(text, { live = false, alternatives = [] } = {}) 
   const cmd = picked.cmd;
   if (!cmd) {
     addLog(`• ${heard}`);
-    ui.action.textContent = t("Komut değil", "Not a command");
+    ui.action.textContent = "Not a command";
     return;
   }
   if (!canFire(cmd)) return;
@@ -142,7 +138,7 @@ async function runCommand(cmd, heard = "") {
   busy = true;
   const label = describeCommand(cmd, config.language);
   ui.action.textContent = label;
-  setStatus("busy", t("Gönderiliyor…", "Sending…"));
+  setStatus("busy", "Sending…");
   try {
     const result = await window.slideagent.command(cmd);
     if (result?.ok) {
@@ -151,7 +147,7 @@ async function runCommand(cmd, heard = "") {
       setStatus("ok", label);
       addLog(`✓ ${heard || label} → ${backend}`);
     } else {
-      const reason = result?.reason || t("Başarısız", "Failed");
+      const reason = result?.reason || "Failed";
       ui.backend.textContent = reason;
       setStatus("error", reason);
       addLog(`✗ ${heard || label} → ${reason}`);
@@ -162,7 +158,7 @@ async function runCommand(cmd, heard = "") {
     addLog(`✗ ${message}`);
   } finally {
     busy = false;
-    if (config.listening) setStatus("listen", t("Dinleniyor", "Listening"));
+    if (config.listening) setStatus("listen", "Listening");
   }
 }
 
@@ -173,14 +169,14 @@ async function stopListening() {
   if (whisper) await whisper.stop();
   if (vosk) await vosk.stop();
   setMicLevel(0);
-  if (ui.meterLabel) ui.meterLabel.textContent = t("kapalı", "off");
-  setStatus("idle", t("Beklemede", "Idle"));
+  if (ui.meterLabel) ui.meterLabel.textContent = "off";
+  setStatus("idle", "Idle");
 }
 
 function attachVoskProgress() {
   window.slideagent.onVoskProgress?.((info) => {
     if (!info) return;
-    const label = info.label || t("Model yükleniyor…", "Loading model…");
+    const label = info.label || "Loading model…";
     setStatus("model", info.pct != null ? `${label} (${info.pct}%)` : label);
   });
 }
@@ -195,7 +191,7 @@ async function startListening() {
   if (mode === "vosk") {
     const voskKey = voskLanguageKey(config.language);
     if (!voskKey) {
-      setStatus("error", t("Bu dil için Vosk modeli yok", "No Vosk model for this language"));
+      setStatus("error", "No Vosk model for this language");
       return;
     }
     try {
@@ -217,20 +213,16 @@ async function startChrome() {
     language: speechLanguage(config.language),
   });
   if (!result?.ok) {
-    setStatus("error", result?.reason || t("Speech to Text başlatılamadı", "Could not start Speech to Text"));
-    ui.micHint.textContent = t(
-      "Speech to Text Google Chrome / Edge gerektirir (K-PrimeApp ile aynı motor). SlideAgent penceresinde dinlenir; ayrı bir sayfa açılmaz.",
-      "Speech to Text needs Google Chrome or Edge (same engine as K-PrimeApp). You listen in the SlideAgent window; no extra page opens.",
-    );
+    setStatus("error", result?.reason || "Could not start Speech to Text");
+    ui.micHint.textContent =
+      "Speech to Text needs Google Chrome or Edge (same engine as K-PrimeApp). You listen in the SlideAgent window; no extra page opens.";
     return false;
   }
-  setStatus("listen", t("Dinleniyor — konuşun", "Listening — speak"));
+  setStatus("listen", "Listening — speak");
   ui.backend.textContent = "Speech to Text";
   setMicLevel(0.04);
-  ui.micHint.textContent = t(
-    "Komutları bu pencerede söyleyin. Motor K-PrimeApp Speech to Text ile aynıdır; ayrı tarayıcı sayfası açılmaz.",
-    "Speak commands in this window. Same engine as K-PrimeApp Speech to Text; no extra browser page.",
-  );
+  ui.micHint.textContent =
+    "Speak commands in this window. Same engine as K-PrimeApp Speech to Text; no extra browser page.";
   return true;
 }
 
@@ -244,10 +236,8 @@ async function startVosk(langKey) {
     onLevel: (level) => setMicLevel(level),
   });
   await vosk.start();
-  ui.micHint.textContent = t(
-    "Akan tanıma (Vosk). Sosyal Video gibi konuşurken anlar. İlk seferde model bir kez indirilir.",
-    "Streaming recognition (Vosk). Understands as you speak, like Sosial Video. Model downloads once.",
-  );
+  ui.micHint.textContent =
+    "Streaming recognition (Vosk). Understands as you speak, like Sosial Video. Model downloads once.";
 }
 
 async function startWhisper() {
@@ -262,10 +252,7 @@ async function startWhisper() {
   whisper.language = config.language;
   try {
     await whisper.start();
-    ui.micHint.textContent = t(
-      "Whisper yedek yoludur; kısa Türkçe komutlarda zayıf kalabilir. Vosk önerilir.",
-      "Whisper is the fallback; short commands are weaker. Prefer Vosk.",
-    );
+    ui.micHint.textContent = "Whisper is the fallback; short commands are weaker. Prefer Vosk.";
   } catch (err) {
     setStatus("error", err instanceof Error ? err.message : String(err));
   }
@@ -321,7 +308,7 @@ window.slideagent.onChromeClosed(() => {
   ui.listen.checked = false;
   void persist({ listening: false });
   void stopListening();
-  setStatus("idle", t("Chrome dinleyici kapandı", "Chrome listener closed"));
+  setStatus("idle", "Chrome listener closed");
 });
 
 window.slideagent.onListening((on) => {
@@ -345,9 +332,7 @@ fillLanguages();
 attachVoskProgress();
 const boot = await window.slideagent.getConfig();
 await applyConfig(boot);
-ui.micHint.textContent = t(
-  "Dinle’yi açın; Speech to Text bu pencerede çalışır (K-PrimeApp ile aynı Google motoru, ayrı sayfa yok).",
-  "Turn Listen on. Speech to Text runs in this window (same Google engine as K-PrimeApp, no extra page).",
-);
+ui.micHint.textContent =
+  "Turn Listen on. Speech to Text runs in this window (same Google engine as K-PrimeApp, no extra page).";
 if (config.listening) await startListening();
-else setStatus("idle", t("Beklemede — dinlemeyi açın", "Idle — turn listening on"));
+else setStatus("idle", "Idle — turn listening on");

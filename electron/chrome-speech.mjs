@@ -245,7 +245,7 @@ export async function startChromeSpeech({ lang = "tr-TR", transcript, closed, us
     return {
       ok: false,
       reason:
-        "Google Chrome (veya Edge) yok. Speech to Text aynı Google motorunu kullanır; bunun için makinede Chrome veya Edge gerekir.",
+        "Google Chrome or Edge is not installed. Speech to Text uses the same Google engine; Chrome or Edge must be on this machine.",
     };
   }
   await startServer();

@@ -58,7 +58,7 @@ export class WhisperStt {
     if (this.listening) return;
     const mic = await window.slideagent?.ensureMicrophone?.();
     if (mic && mic.ok === false) {
-      throw new Error(mic.reason || "Mikrofon izni yok");
+      throw new Error(mic.reason || "Microphone permission denied");
     }
 
     this.stream = await navigator.mediaDevices.getUserMedia({
@@ -92,10 +92,10 @@ export class WhisperStt {
     this.keepAlive.connect(this.ctx.destination);
 
     this.listening = true;
-    this.onStatus?.("listen", "Mikrofon açık, Whisper yükleniyor…");
+    this.onStatus?.("listen", "Microphone on, loading Whisper…");
     await this.ensureWorker();
     if (this.ctx.state === "suspended") await this.ctx.resume();
-    this.onStatus?.("listen", "Dinleniyor (Whisper) — konuşun, bitince durun");
+    this.onStatus?.("listen", "Listening (Whisper) — speak, then pause");
   }
 
   async resume() {
@@ -117,7 +117,7 @@ export class WhisperStt {
       this._ready = resolve;
       this._fail = reject;
       this.worker.postMessage({ type: "init" });
-      setTimeout(() => reject(new Error("Whisper zaman aşımı")), 180000);
+      setTimeout(() => reject(new Error("Whisper timed out")), 180000);
     });
   }
 
@@ -129,7 +129,7 @@ export class WhisperStt {
     if (msg.type === "ready") {
       this.ready = true;
       this._ready?.();
-      this.onStatus?.("ready", "Whisper hazır");
+      this.onStatus?.("ready", "Whisper ready");
       return;
     }
     if (msg.type === "error") {
@@ -142,7 +142,7 @@ export class WhisperStt {
       const text = String(msg.text ?? "").trim();
       if (text) this.onTranscript?.(text);
       else this.onTranscript?.("", msg.error || "empty");
-      if (this.listening && this.ready) this.onStatus?.("listen", "Dinleniyor (Whisper)");
+      if (this.listening && this.ready) this.onStatus?.("listen", "Listening (Whisper)");
     }
   }
 
@@ -194,7 +194,7 @@ export class WhisperStt {
     this.busy = true;
     const id = this.nextId++;
     this.worker.postMessage({ type: "transcribe", id, audio, language: this.language }, [audio.buffer]);
-    this.onStatus?.("busy", "Çözülüyor…");
+    this.onStatus?.("busy", "Transcribing…");
   }
 
   async stop() {
