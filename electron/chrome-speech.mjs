@@ -164,7 +164,7 @@ export function findChrome() {
 }
 
 function openChromeApp(exe, url) {
-  const args = [`--app=${url}`, "--window-size=480,700", "--new-window"];
+  const args = ["--new-window", url];
   const child = spawn(exe, args, { detached: true, stdio: "ignore" });
   child.unref();
 }
