@@ -94,6 +94,7 @@ function loadPage(window) {
 
 function quitApp() {
   quitting = true;
+  stopChromeSpeech();
   app.quit();
 }
 
@@ -275,6 +276,7 @@ function registerIpc() {
   ipcMain.handle("start-chrome-speech", async (_e, opts) => {
     return startChromeSpeech({
       lang: opts?.language || "tr-TR",
+      userData: app.getPath("userData"),
       transcript: (payload) => win?.webContents.send("chrome-transcript", payload),
       closed: () => win?.webContents.send("chrome-closed"),
     });
@@ -307,6 +309,7 @@ app.whenReady().then(async () => {
 
 app.on("before-quit", () => {
   quitting = true;
+  stopChromeSpeech();
 });
 
 app.on("window-all-closed", () => {

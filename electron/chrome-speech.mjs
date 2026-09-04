@@ -9,19 +9,24 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+export const LISTEN_PORT = 17391;
+
 let server = null;
-let port = 0;
+let port = LISTEN_PORT;
 let token = "";
 let listening = false;
 let generation = 0;
 let language = "tr-TR";
 let onTranscript = null;
 let onClosed = null;
+let chromeChild = null;
+let profileDir = "";
 
 function json(res, code, body) {
   const data = JSON.stringify(body);
@@ -102,11 +107,20 @@ function startServer() {
         json(res, 500, { ok: false, reason: String(err?.message ?? err) });
       }
     });
-    server.on("error", reject);
-    server.listen(0, "127.0.0.1", () => {
+    const onBound = () => {
+      server.removeListener("error", onError);
       port = server.address().port;
       resolve(port);
-    });
+    };
+    const onError = (err) => {
+      if (err.code === "EADDRINUSE") {
+        server.listen(0, "127.0.0.1", onBound);
+        return;
+      }
+      reject(err);
+    };
+    server.once("error", onError);
+    server.listen(LISTEN_PORT, "127.0.0.1", onBound);
   });
 }
 
@@ -163,16 +177,56 @@ export function findChrome() {
   return null;
 }
 
-function openChromeApp(exe, url) {
-  const args = ["--new-window", url];
-  const child = spawn(exe, args, { detached: true, stdio: "ignore" });
-  child.unref();
+function helperProfile(userData) {
+  const name = "slideagent-chrome-speech-profile";
+  if (userData) return path.join(userData, name);
+  return path.join(os.tmpdir(), name);
 }
 
-export async function startChromeSpeech({ lang = "tr-TR", transcript, closed } = {}) {
+function stopChromeProcess() {
+  const marker = "slideagent-chrome-speech-profile";
+  if (process.platform === "win32") {
+    if (chromeChild?.pid) {
+      spawn("taskkill", ["/PID", String(chromeChild.pid), "/T", "/F"], { detached: true, stdio: "ignore" }).unref();
+    }
+  } else {
+    spawnSync("pkill", ["-KILL", "-f", marker], { stdio: "ignore" });
+    if (chromeChild?.pid) {
+      try {
+        process.kill(-chromeChild.pid, "SIGKILL");
+      } catch {
+        /* ignore */
+      }
+      try {
+        process.kill(chromeChild.pid, "SIGKILL");
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  chromeChild = null;
+}
+
+function openChromeApp(exe, url) {
+  stopChromeProcess();
+  fs.mkdirSync(profileDir, { recursive: true });
+  const args = [
+    `--user-data-dir=${profileDir}`,
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-sync",
+    `--app=${url}`,
+    "--window-size=420,640",
+  ];
+  chromeChild = spawn(exe, args, { detached: true, stdio: "ignore" });
+  chromeChild.unref();
+}
+
+export async function startChromeSpeech({ lang = "tr-TR", transcript, closed, userData } = {}) {
   language = lang || "tr-TR";
   onTranscript = transcript || null;
   onClosed = closed || null;
+  profileDir = helperProfile(userData);
   const exe = findChrome();
   if (!exe) {
     return {
@@ -191,6 +245,7 @@ export async function startChromeSpeech({ lang = "tr-TR", transcript, closed } =
 
 export function stopChromeSpeech() {
   listening = false;
+  stopChromeProcess();
 }
 
 export function chromeSpeechActive() {

@@ -228,8 +228,8 @@ async function startChrome() {
   ui.backend.textContent = "K-PrimeApp Chrome";
   setMicLevel(0.04);
   ui.micHint.textContent = t(
-    "Chrome’da K-PrimeApp ile aynı Speech to Text açılır. Language = Turkish, Start Recording. Durumda Whisper yazıyorsa yanlış motordasınız.",
-    "Chrome opens the same Speech to Text as K-PrimeApp. Set Language to Turkish, then Start Recording.",
+    "Dinlerken macOS mikrofon menüsünde Google Chrome görünür (Standart / Voice Isolation). Dinle’yi kapatınca Chrome kapanır, gösterge kaybolur.",
+    "While listening, macOS shows Google Chrome in the mic menu (Standard / Voice Isolation). Turning Listen off quits that Chrome so the indicator leaves.",
   );
   return true;
 }

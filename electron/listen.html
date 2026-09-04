@@ -30,8 +30,8 @@
     </style>
   </head>
   <body>
-    <h1>Speech to Text</h1>
-    <p>K-PrimeApp IT → Speech to Text ile aynı Chrome motoru (<code>webkitSpeechRecognition</code>).</p>
+    <h1>SlideAgent dinleyici</h1>
+    <p>Google ses tanıma yalnızca gerçek Chrome’da çalışır; SlideAgent penceresinin içinde bu servis yok. İlk seferde mikrofon iznini buradan verin — sonraki açılışlarda sorulmaz.</p>
     <label>Language
       <select id="language">
         <option value="tr-TR">Turkish</option>
@@ -167,7 +167,11 @@
       function stopListening() {
         stopped = true;
         setRunning(false);
-        try { recognition && recognition.stop(); } catch (e) { /* ignore */ }
+        if (recognition) {
+          try { recognition.onend = null; } catch (e) { /* ignore */ }
+          try { recognition.abort(); } catch (e) { /* ignore */ }
+          try { recognition.stop(); } catch (e) { /* ignore */ }
+        }
         recognition = null;
       }
 
@@ -201,6 +205,7 @@
       }
 
       window.addEventListener("pagehide", () => {
+        stopListening();
         post("/closed", { session: Number(session) });
       });
 
