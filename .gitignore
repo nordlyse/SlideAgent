@@ -1,0 +1,9 @@
+node_modules
+dist
+release
+.DS_Store
+*.log
+.vite
+out
+build/icon.ico
+build/icon-256.png

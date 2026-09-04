@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SlideAgent</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <img src="./assets/icon.png" alt="" width="36" height="36" />
+        <div>
+          <h1>SlideAgent</h1>
+          <p class="tag">Sesle PowerPoint / Impress</p>
+        </div>
+      </div>
+      <label class="switch">
+        <input id="listen" type="checkbox" />
+        <span>Dinle</span>
+      </label>
+    </header>
+
+    <section class="panel status-panel">
+      <p id="status" data-kind="idle">Hazırlanıyor…</p>
+      <dl>
+        <div><dt>Duyulan</dt><dd id="heard">—</dd></div>
+        <div><dt>Komut</dt><dd id="action">—</dd></div>
+        <div><dt>Motor</dt><dd id="backend">—</dd></div>
+      </dl>
+    </section>
+
+    <section class="panel">
+      <label>
+        Dil
+        <select id="language"></select>
+      </label>
+      <label>
+        Sunum motoru
+        <select id="engine">
+          <option value="auto">Otomatik</option>
+          <option value="powerpoint">PowerPoint API</option>
+          <option value="impress">LibreOffice UNO</option>
+          <option value="keyboard">Klavye</option>
+        </select>
+      </label>
+      <label>
+        Ses tanıma
+        <select id="stt">
+          <option value="auto">Otomatik</option>
+          <option value="webspeech">Web Speech (Sosial Video)</option>
+          <option value="whisper">Whisper tiny (çevrimdışı)</option>
+        </select>
+      </label>
+      <p id="micHint" class="hint"></p>
+    </section>
+
+    <section class="panel">
+      <label class="grow">
+        Komutu yaz
+        <span class="row">
+          <input id="manual" type="text" placeholder="ileri, geri, başa git, 15. slayta git" />
+          <button id="send" type="button">Gönder</button>
+        </span>
+      </label>
+    </section>
+
+    <section class="panel">
+      <h2>Son komutlar</h2>
+      <ul id="log"></ul>
+    </section>
+
+    <footer>
+      <p id="examples">Örnekler: <code>ileri</code> <code>neste</code> <code>weiter</code> <code>siguiente</code> <code>下一张</code></p>
+    </footer>
+    <script type="module" src="/src/renderer.js"></script>
+  </body>
+</html>
