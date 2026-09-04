@@ -44,24 +44,36 @@ function configPath() {
   return path.join(app.getPath("userData"), "config.json");
 }
 
+function normalizeConfig(raw = {}) {
+  const next = {
+    language: "tr",
+    engine: "auto",
+    stt: "chrome",
+    listening: false,
+    openAtLogin: false,
+    kprimeSpeech: true,
+    ...raw,
+  };
+  if (!next.kprimeSpeech || next.stt === "auto" || next.stt === "whisper") {
+    next.stt = "chrome";
+    next.kprimeSpeech = true;
+  }
+  if (!["chrome", "vosk", "whisper"].includes(next.stt)) next.stt = "chrome";
+  if (!next.language) next.language = "tr";
+  return next;
+}
+
 function loadConfig() {
   try {
-    return {
-      language: "tr",
-      engine: "auto",
-      stt: "auto",
-      listening: false,
-      openAtLogin: false,
-      ...JSON.parse(fs.readFileSync(configPath(), "utf8")),
-    };
+    return normalizeConfig(JSON.parse(fs.readFileSync(configPath(), "utf8")));
   } catch {
-    return { language: "tr", engine: "auto", stt: "auto", listening: false, openAtLogin: false };
+    return normalizeConfig();
   }
 }
 
 function saveConfig(next) {
   fs.mkdirSync(app.getPath("userData"), { recursive: true });
-  fs.writeFileSync(configPath(), JSON.stringify(next, null, 2));
+  fs.writeFileSync(configPath(), JSON.stringify(normalizeConfig(next), null, 2));
 }
 
 async function waitForVite(url) {
@@ -239,7 +251,7 @@ function registerVoskProtocol() {
 function registerIpc() {
   ipcMain.handle("get-config", () => loadConfig());
   ipcMain.handle("set-config", (_e, patch) => {
-    const next = { ...loadConfig(), ...(patch && typeof patch === "object" ? patch : {}) };
+    const next = normalizeConfig({ ...loadConfig(), ...(patch && typeof patch === "object" ? patch : {}) });
     saveConfig(next);
     rebuildTray();
     return next;

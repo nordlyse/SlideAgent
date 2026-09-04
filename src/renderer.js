@@ -25,7 +25,7 @@ const ui = {
 let config = {
   language: "tr",
   engine: "auto",
-  stt: "auto",
+  stt: "chrome",
   listening: false,
 };
 let stopSpeech = null;
@@ -79,7 +79,8 @@ function updateExamples() {
 
 async function applyConfig(next) {
   config = { ...config, ...next, language: knownLanguageId(next.language ?? config.language) };
-  if (!["auto", "vosk", "whisper"].includes(config.stt)) config.stt = "auto";
+  if (config.stt === "auto" || config.stt === "whisper") config.stt = "chrome";
+  if (!["chrome", "vosk", "whisper"].includes(config.stt)) config.stt = "chrome";
   if (![...ui.language.options].some((o) => o.value === config.language)) fillLanguages();
   ui.language.value = config.language;
   ui.engine.value = config.engine;
@@ -186,7 +187,7 @@ function attachVoskProgress() {
 
 async function startListening() {
   await stopListening();
-  const mode = config.stt;
+  const mode = config.stt === "auto" || !config.stt ? "chrome" : config.stt;
   if (mode === "whisper") {
     await startWhisper();
     return;
@@ -223,11 +224,12 @@ async function startChrome() {
     );
     return false;
   }
-  setStatus("listen", t(`Dinleniyor (Chrome ${speechLanguage(config.language)})`, `Listening (Chrome ${speechLanguage(config.language)})`));
+  setStatus("listen", t("Dinleniyor (K-PrimeApp Speech to Text)", "Listening (K-PrimeApp Speech to Text)"));
+  ui.backend.textContent = "K-PrimeApp Chrome";
   setMicLevel(0.04);
   ui.micHint.textContent = t(
-    "Chrome penceresinde dil = Turkish (tr-TR), Start Recording. K-PrimeApp Speech to Text ile aynı motor; komut Google bitirince gider.",
-    "In the Chrome window set Language to Turkish (tr-TR) and press Start Recording. Same engine as K-PrimeApp Speech to Text.",
+    "Chrome’da K-PrimeApp ile aynı Speech to Text açılır. Language = Turkish, Start Recording. Durumda Whisper yazıyorsa yanlış motordasınız.",
+    "Chrome opens the same Speech to Text as K-PrimeApp. Set Language to Turkish, then Start Recording.",
   );
   return true;
 }
@@ -344,8 +346,8 @@ attachVoskProgress();
 const boot = await window.slideagent.getConfig();
 await applyConfig(boot);
 ui.micHint.textContent = t(
-  "Otomatik: K-PrimeApp ile aynı Chrome Web Speech. Dinle açılınca küçük bir Chrome penceresi açılır.",
-  "Auto: the same Chrome Web Speech engine as K-PrimeApp. Listening opens a small Chrome window.",
+  "Otomatik artık yok: varsayılan K-PrimeApp Speech to Text (Chrome). Whisper kayıtlıysa Chrome’a çevrilir.",
+  "There is no Auto default: K-PrimeApp Speech to Text (Chrome). A saved Whisper setting is switched to Chrome.",
 );
 if (config.listening) await startListening();
 else setStatus("idle", t("Beklemede — dinlemeyi açın", "Idle — turn listening on"));

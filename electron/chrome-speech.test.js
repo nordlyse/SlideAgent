@@ -14,6 +14,7 @@ describe("K-PrimeApp Chrome speech helper", () => {
     assert.match(html, /recognition\.continuous = true/);
     assert.match(html, /recognition\.interimResults = true/);
     assert.match(html, /recognition\.lang = language/);
+    assert.match(html, /Speech to Text/);
     assert.match(html, /Start Recording/);
     assert.match(html, /K-PrimeApp/);
     assert.doesNotMatch(html, /recognition\.maxAlternatives/);
