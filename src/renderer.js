@@ -217,19 +217,19 @@ async function startChrome() {
     language: speechLanguage(config.language),
   });
   if (!result?.ok) {
-    setStatus("error", result?.reason || t("Chrome açılamadı", "Could not open Chrome"));
+    setStatus("error", result?.reason || t("Speech to Text başlatılamadı", "Could not start Speech to Text"));
     ui.micHint.textContent = t(
-      "K-PrimeApp’teki motor Google Chrome Web Speech’tir. Electron içinde çalışmaz. Chrome veya Edge kurun.",
-      "K-PrimeApp uses Chrome Web Speech. It cannot run inside Electron. Install Chrome or Edge.",
+      "Speech to Text Google Chrome / Edge gerektirir (K-PrimeApp ile aynı motor). SlideAgent penceresinde dinlenir; ayrı bir sayfa açılmaz.",
+      "Speech to Text needs Google Chrome or Edge (same engine as K-PrimeApp). You listen in the SlideAgent window; no extra page opens.",
     );
     return false;
   }
-  setStatus("listen", t("Dinleniyor (K-PrimeApp Speech to Text)", "Listening (K-PrimeApp Speech to Text)"));
-  ui.backend.textContent = "K-PrimeApp Chrome";
+  setStatus("listen", t("Dinleniyor — konuşun", "Listening — speak"));
+  ui.backend.textContent = "Speech to Text";
   setMicLevel(0.04);
   ui.micHint.textContent = t(
-    "Dinlerken macOS mikrofon menüsünde Google Chrome görünür (Standart / Voice Isolation). Dinle’yi kapatınca Chrome kapanır, gösterge kaybolur.",
-    "While listening, macOS shows Google Chrome in the mic menu (Standard / Voice Isolation). Turning Listen off quits that Chrome so the indicator leaves.",
+    "Komutları bu pencerede söyleyin. Motor K-PrimeApp Speech to Text ile aynıdır; ayrı tarayıcı sayfası açılmaz.",
+    "Speak commands in this window. Same engine as K-PrimeApp Speech to Text; no extra browser page.",
   );
   return true;
 }
@@ -346,8 +346,8 @@ attachVoskProgress();
 const boot = await window.slideagent.getConfig();
 await applyConfig(boot);
 ui.micHint.textContent = t(
-  "Otomatik artık yok: varsayılan K-PrimeApp Speech to Text (Chrome). Whisper kayıtlıysa Chrome’a çevrilir.",
-  "There is no Auto default: K-PrimeApp Speech to Text (Chrome). A saved Whisper setting is switched to Chrome.",
+  "Dinle’yi açın; Speech to Text bu pencerede çalışır (K-PrimeApp ile aynı Google motoru, ayrı sayfa yok).",
+  "Turn Listen on. Speech to Text runs in this window (same Google engine as K-PrimeApp, no extra page).",
 );
 if (config.listening) await startListening();
 else setStatus("idle", t("Beklemede — dinlemeyi açın", "Idle — turn listening on"));

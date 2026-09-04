@@ -2,85 +2,20 @@
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Speech to Text</title>
-    <style>
-      :root { color-scheme: dark; }
-      html, body { margin: 0; background: #0c1a28; color: #e8eef4; font-family: "Segoe UI", "SF Pro Text", sans-serif; }
-      body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; gap: 14px; }
-      h1 { margin: 0; font-size: 20px; }
-      p { margin: 0; color: #8aa0b3; font-size: 13px; line-height: 1.45; max-width: 380px; }
-      label { color: #8aa0b3; font-size: 13px; }
-      select {
-        margin-left: 8px; border-radius: 8px; border: 1px solid #2a4258; background: #132536; color: #e8eef4;
-        padding: 8px 10px; font-size: 14px;
-      }
-      #chip { display: none; color: #f44336; font-weight: 650; letter-spacing: 0.02em; }
-      #chip.on { display: inline-flex; align-items: center; gap: 6px; }
-      #dot { width: 10px; height: 10px; border-radius: 50%; background: #f44336; animation: pulse 1s infinite; }
-      @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }
-      #interim { min-height: 1.4em; font-style: italic; color: #8aa0b3; }
-      #heard { font-size: 22px; font-weight: 650; min-height: 1.4em; }
-      button {
-        border: 0; border-radius: 999px; padding: 16px 28px; font-size: 17px; font-weight: 650; color: white; cursor: pointer;
-        background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
-      }
-      button.stop { background: linear-gradient(135deg, #424242 0%, #212121 100%); }
-      #err { color: #f07178; }
-    </style>
+    <title>SlideAgent Speech to Text</title>
   </head>
   <body>
-    <h1>SlideAgent dinleyici</h1>
-    <p>Google ses tanıma yalnızca gerçek Chrome’da çalışır; SlideAgent penceresinin içinde bu servis yok. İlk seferde mikrofon iznini buradan verin — sonraki açılışlarda sorulmaz.</p>
-    <label>Language
-      <select id="language">
-        <option value="tr-TR">Turkish</option>
-        <option value="en-US">English</option>
-        <option value="de-DE">German</option>
-        <option value="fr-FR">French</option>
-        <option value="es-ES">Spanish</option>
-        <option value="it-IT">Italian</option>
-        <option value="pt-BR">Portuguese</option>
-        <option value="ja-JP">Japanese</option>
-        <option value="zh-CN">Chinese</option>
-        <option value="ar-SA">Arabic</option>
-      </select>
-    </label>
-    <div id="chip"><span id="dot"></span> Listening...</div>
-    <div id="heard">—</div>
-    <div id="interim"></div>
-    <p id="err"></p>
-    <button id="btn" type="button">Start Recording</button>
     <script>
-      /* Port of K-PrimeApp frontend/src/features/IT/SpeechToText.js
-         recognition.continuous = true
-         recognition.interimResults = true
-         recognition.lang = language
-         onresult: results[i][0].transcript only; finals committed, interim displayed. */
+      /* Hidden helper: K-PrimeApp SpeechToText.js recognition loop.
+         UI lives in the SlideAgent window. */
       const params = new URLSearchParams(location.search);
       const token = params.get("token") || "";
       const session = params.get("session") || "0";
       const qs = `?token=${encodeURIComponent(token)}&session=${encodeURIComponent(session)}`;
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const btn = document.getElementById("btn");
-      const chip = document.getElementById("chip");
-      const heard = document.getElementById("heard");
-      const interimEl = document.getElementById("interim");
-      const errEl = document.getElementById("err");
-      const languageEl = document.getElementById("language");
-
       let language = params.get("lang") || "tr-TR";
-      if (![...languageEl.options].some((o) => o.value === language)) {
-        const extra = document.createElement("option");
-        extra.value = language;
-        extra.textContent = language;
-        languageEl.append(extra);
-      }
-      languageEl.value = language;
-
       let recognition = null;
       let stopped = false;
-      let running = false;
 
       function post(path, body) {
         return fetch(path + qs, {
@@ -91,22 +26,14 @@
         }).catch(() => {});
       }
 
-      function setRunning(on) {
-        running = on;
-        chip.classList.toggle("on", on);
-        btn.textContent = on ? "Stop Recording" : "Start Recording";
-        btn.classList.toggle("stop", on);
-      }
-
       function startListening() {
         if (!SpeechRecognition) {
-          errEl.textContent = "Speech recognition is not supported in this browser. Use Chrome or Edge.";
+          post("/transcript", { text: "", live: false, session: Number(session) });
           return;
         }
         if (recognition) {
           try { recognition.stop(); } catch (e) { /* ignore */ }
         }
-        language = languageEl.value;
         recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
@@ -117,56 +44,39 @@
           let interimText = "";
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalText += transcript + " ";
-            } else {
-              interimText += transcript;
-            }
+            if (event.results[i].isFinal) finalText += transcript + " ";
+            else interimText += transcript;
           }
-          if (interimText) interimEl.textContent = interimText;
-          else if (!finalText) interimEl.textContent = "";
-          if (finalText) {
-            const t = finalText.trim();
-            heard.textContent = t;
-            interimEl.textContent = "";
-            post("/transcript", {
-              text: t,
-              live: false,
-              session: Number(session),
-            });
+          if (interimText) {
+            post("/transcript", { text: interimText.trim(), live: true, session: Number(session) });
+          }
+          if (finalText.trim()) {
+            post("/transcript", { text: finalText.trim(), live: false, session: Number(session) });
           }
         };
 
         recognition.onerror = (event) => {
-          if (event.error === "no-speech") return;
-          errEl.textContent = "Error: " + event.error;
+          if (event.error === "no-speech" || event.error === "aborted") return;
           if (event.error === "not-allowed" || event.error === "service-not-allowed") {
             stopped = true;
-            setRunning(false);
           }
         };
 
         recognition.onend = () => {
-          if (stopped) {
-            setRunning(false);
-            return;
-          }
+          if (stopped) return;
           try { recognition.start(); } catch (e) { /* already running */ }
         };
 
         try {
           recognition.start();
           stopped = false;
-          setRunning(true);
-          errEl.textContent = "";
         } catch (e) {
-          errEl.textContent = "Mikrofon için Start Recording’e basın.";
+          /* autoplay / gesture */
         }
       }
 
       function stopListening() {
         stopped = true;
-        setRunning(false);
         if (recognition) {
           try { recognition.onend = null; } catch (e) { /* ignore */ }
           try { recognition.abort(); } catch (e) { /* ignore */ }
@@ -175,23 +85,14 @@
         recognition = null;
       }
 
-      btn.addEventListener("click", () => {
-        if (running) stopListening();
-        else startListening();
-      });
-
-      languageEl.addEventListener("change", () => {
-        language = languageEl.value;
-        if (running) {
-          stopListening();
-          startListening();
-        }
-      });
-
       async function poll() {
         try {
           const res = await fetch("/state" + qs, { cache: "no-store" });
           const data = await res.json();
+          if (data.language && data.language !== language) {
+            language = data.language;
+            if (!stopped) startListening();
+          }
           if (!data.listening || String(data.session) !== String(session)) {
             stopListening();
             post("/closed", { session: Number(session) });
@@ -209,13 +110,8 @@
         post("/closed", { session: Number(session) });
       });
 
-      if (!SpeechRecognition) {
-        errEl.textContent = "Speech recognition is not supported in this browser. Use Chrome or Edge.";
-        btn.disabled = true;
-      } else {
-        startListening();
-        poll();
-      }
+      startListening();
+      poll();
     </script>
   </body>
 </html>

@@ -207,6 +207,15 @@ function stopChromeProcess() {
   chromeChild = null;
 }
 
+function hideHelperOnMac(pid) {
+  if (process.platform !== "darwin" || !pid) return;
+  spawn(
+    "osascript",
+    ["-e", `tell application "System Events" to set visible of (every process whose unix id is ${Number(pid)}) to false`],
+    { stdio: "ignore" },
+  ).unref();
+}
+
 function openChromeApp(exe, url) {
   stopChromeProcess();
   fs.mkdirSync(profileDir, { recursive: true });
@@ -215,11 +224,15 @@ function openChromeApp(exe, url) {
     "--no-first-run",
     "--no-default-browser-check",
     "--disable-sync",
+    "--use-fake-ui-for-media-stream",
+    "--autoplay-policy=no-user-gesture-required",
+    "--window-position=-32000,-32000",
+    "--window-size=64,64",
     `--app=${url}`,
-    "--window-size=420,640",
   ];
   chromeChild = spawn(exe, args, { detached: true, stdio: "ignore" });
   chromeChild.unref();
+  setTimeout(() => hideHelperOnMac(chromeChild?.pid), 700);
 }
 
 export async function startChromeSpeech({ lang = "tr-TR", transcript, closed, userData } = {}) {
@@ -232,7 +245,7 @@ export async function startChromeSpeech({ lang = "tr-TR", transcript, closed, us
     return {
       ok: false,
       reason:
-        "Google Chrome (veya Edge) yok. K-PrimeApp’teki ses tanıma yalnızca gerçek Chrome’da çalışır — Electron’da Google konuşma servisi yoktur.",
+        "Google Chrome (veya Edge) yok. Speech to Text aynı Google motorunu kullanır; bunun için makinede Chrome veya Edge gerekir.",
     };
   }
   await startServer();

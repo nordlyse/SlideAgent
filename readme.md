@@ -22,12 +22,12 @@ Paketledikten sonra dosyalar proje kökündeki **`release/`** klasöründedir:
 
 | Platform | Dosya | Ne işe yarar |
 |---|---|---|
-| macOS | `SlideAgent-1.0.9-mac-x64.dmg` | Applications’a sürükle-bırak kurulum |
-| macOS | `SlideAgent-1.0.9-mac.zip` | `.app` arşivi |
-| Windows | `SlideAgent Setup 1.0.9.exe` | NSIS kurucu; masaüstü + Start Menu kısayolu |
-| Windows | `SlideAgent-1.0.9-win.zip` | Kurucusuz klasör (içinde `SlideAgent.exe`) |
-| Linux | `SlideAgent-1.0.9.AppImage` | Çalıştırılabilir tek dosya |
-| Linux | `slideagent_1.0.9_amd64.deb` | Debian / Ubuntu paketi |
+| macOS | `SlideAgent-1.1.0-mac-x64.dmg` | Applications’a sürükle-bırak kurulum |
+| macOS | `SlideAgent-1.1.0-mac.zip` | `.app` arşivi |
+| Windows | `SlideAgent Setup 1.1.0.exe` | NSIS kurucu; masaüstü + Start Menu kısayolu |
+| Windows | `SlideAgent-1.1.0-win.zip` | Kurucusuz klasör (içinde `SlideAgent.exe`) |
+| Linux | `SlideAgent-1.1.0.AppImage` | Çalıştırılabilir tek dosya |
+| Linux | `slideagent_1.1.0_amd64.deb` | Debian / Ubuntu paketi |
 
 Sürüm numarası `package.json` içindeki `version` alanından gelir. Mimari, paketleyen bilgisayara göre değişir.
 
@@ -35,11 +35,11 @@ Sürüm numarası `package.json` içindeki `version` alanından gelir. Mimari, p
 
 Pencereyi **X** ile kapatmak uygulamayı tamamen kapatır (tepsi / arka plan süreci kalmaz).
 
-Sunumu **PowerPoint** veya **LibreOffice Impress** ile aç, slayt gösterisini başlat, sonra SlideAgent’ta **Dinle** anahtarını aç. Google konuşma motoru Electron içinde yoktur; bu yüzden küçük bir **Chrome dinleyici** penceresi açılır. Mikrofon izni **yalnızca ilk seferde** istenir.
+Sunumu **PowerPoint** veya **LibreOffice Impress** ile aç, slayt gösterisini başlat, sonra SlideAgent’ta **Dinle** anahtarını aç. Speech to Text SlideAgent penceresindedir; ayrı bir tarayıcı sayfası açılmaz.
 
 ### macOS
 
-1. `release/SlideAgent-1.0.9-mac-x64.dmg` dosyasını aç.
+1. `release/SlideAgent-1.1.0-mac-x64.dmg` dosyasını aç.
 2. **SlideAgent** uygulamasını **Applications** klasörüne sürükle.
 3. İlk açılışta Gatekeeper “tanınmayan geliştirici” diyebilir: **Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç**.
 4. Mikrofon izni isteyecek. AppleScript / erişilebilirlik izni, klavye yedek yolu için gerekebilir.
@@ -48,16 +48,16 @@ Paket imzasızdır (Developer ID yok).
 
 ### Windows
 
-1. `SlideAgent Setup 1.0.9.exe` çalıştır, kurulum sihirbazını bitir.
+1. `SlideAgent Setup 1.1.0.exe` çalıştır, kurulum sihirbazını bitir.
 2. Masaüstünde ve Başlat menüsünde **SlideAgent** kısayolu oluşur.
-3. Alternatif: `SlideAgent-1.0.9-win.zip` dosyasını açıp `SlideAgent.exe` çalıştır.
+3. Alternatif: `SlideAgent-1.1.0-win.zip` dosyasını açıp `SlideAgent.exe` çalıştır.
 
 SmartScreen uyarı verebilir; yerel derleme olduğu için imza yoktur. PowerPoint’in açık olması COM yolu için yeterlidir.
 
 ### Linux
 
-- **AppImage:** `chmod +x SlideAgent-1.0.9.AppImage && ./SlideAgent-1.0.9.AppImage`
-- **deb:** `sudo dpkg -i slideagent_1.0.9_amd64.deb` (gerekirse `sudo apt -f install`)
+- **AppImage:** `chmod +x SlideAgent-1.1.0.AppImage && ./SlideAgent-1.1.0.AppImage`
+- **deb:** `sudo dpkg -i slideagent_1.1.0_amd64.deb` (gerekirse `sudo apt -f install`)
 
 LibreOffice UNO için Impress’i şöyle açmak en temiz yoldur:
 
@@ -71,9 +71,9 @@ Klavye yedeği için [xdotool](https://github.com/jordansissel/xdotool) (MIT) ö
 
 K-PrimeApp **Speech to Text** sayfası Whisper değil; Chrome’daki **`webkitSpeechRecognition`** (Google Web Speech). Bu motor milisaniyede ve Türkçe’de iyidir — ama **yalnızca gerçek Chrome / Edge** içinde çalışır. Electron Chromium’unda Google konuşma anahtarı yoktur.
 
-**Varsayılan** K-PrimeApp **Speech to Text** ile aynı Chrome Web Speech motorudur. SlideAgent (Electron) bu servisi çalıştıramaz; **Dinle** küçük bir Chrome `--app` penceresi açar. macOS mikrofon menüsünde o sırada **Google Chrome** (Standart / Voice Isolation) görünür; **Dinle** kapanınca bu Chrome süreci kapanır ve gösterge kaybolur. Language = **Turkish**.
+**Varsayılan** Speech to Text, K-PrimeApp ile aynı Google Web Speech motorudur ama arayüz SlideAgent içindedir. Chrome arka planda (ekran dışında) çalışır; **Dinle** dışında bir sayfa görmezsiniz. macOS mikrofon menüsünde hâlâ Chrome yazabilir çünkü motor odur; Dinle kapanınca süreç de kapanır.
 
-1. **K-PrimeApp Speech to Text (Chrome)** — varsayılan. Google Chrome veya Microsoft Edge gerekir.
+1. **Speech to Text** — varsayılan, SlideAgent penceresinde. Google Chrome veya Edge kurulu olmalı.
 2. **Vosk** — Chrome yoksa çevrimdışı yedek.
 
 Whisper artık seçenek değildir; kısa Türkçe komutları uydurur.
@@ -86,7 +86,7 @@ Komut çözümleyici tüm bu dillerdeki “ileri / geri / başa / sona / 15. sla
 
 Komut sayılmazsa slayt değişmez: “bu slaytta ileri teknoloji…” gibi cümleler yok sayılır.
 
-1.0.0–1.0.8 paketlerini kullanmayın; **1.0.9** dinlemeyi durdurunca Chrome mikrofonunu bırakır.
+1.0.0–1.0.9 paketlerini kullanmayın; **1.1.0** Speech to Text’i SlideAgent penceresine taşır.
 
 Metin kutusundan da aynı komutlar gönderilebilir.
 
