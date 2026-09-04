@@ -39,7 +39,7 @@ linux:
   icon: build/icon.png
   category: Office
   synopsis: Voice-controlled PowerPoint and LibreOffice slide agent
-  maintainer: nordlyse <nordlyse@users.noreply.github.com>
+  maintainer: Jakob Lyse <jakob.lyse@gmail.com>
   target:
     - AppImage
     - deb

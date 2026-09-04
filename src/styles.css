@@ -56,7 +56,24 @@ h2 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; }
 #status[data-kind="idle"] { color: var(--idle); }
 
 dl { display: grid; gap: 6px; margin: 0; }
-dl > div { display: grid; grid-template-columns: 88px 1fr; gap: 8px; font-size: 13px; }
+.meter {
+  display: inline-block;
+  width: 120px;
+  height: 8px;
+  background: #0e2131;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+#meterBar {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 80ms linear;
+}
 dt { color: var(--muted); }
 dd { margin: 0; overflow-wrap: anywhere; }
 

@@ -1,0 +1,31 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
+import { chromeCandidates, findChrome } from "./chrome-speech.mjs";
+
+const root = path.dirname(fileURLToPath(import.meta.url));
+
+describe("K-PrimeApp Chrome speech helper", () => {
+  it("ships a listen page that uses the same Web Speech API", () => {
+    const html = fs.readFileSync(path.join(root, "listen.html"), "utf8");
+    assert.match(html, /webkitSpeechRecognition/);
+    assert.match(html, /recognition\.continuous = false/);
+    assert.match(html, /recognition\.interimResults = true/);
+    assert.match(html, /recognition\.maxAlternatives = 5/);
+    assert.match(html, /Start Recording/);
+  });
+
+  it("looks for branded Chrome or Edge, not Electron", () => {
+    const list = chromeCandidates();
+    assert.ok(list.length >= 2);
+    assert.equal(list.some((p) => /Chrome/i.test(p) || /chrome/i.test(p)), true);
+    assert.equal(
+      list.every((p) => !/Electron/i.test(p)),
+      true,
+    );
+    const found = findChrome();
+    if (found) assert.match(found, /Chrome|chrome|msedge|Edge|chromium/i);
+  });
+});

@@ -37,11 +37,14 @@ self.onmessage = async (event) => {
       return;
     }
     try {
-      const options = { task: "transcribe" };
+      const options = { task: "transcribe", max_new_tokens: 16 };
       const lang = whisperLanguage(msg.language);
       if (lang) options.language = lang;
-      const result = await asr(msg.audio, options);
-      self.postMessage({ type: "transcript", id: msg.id, text: String(result?.text ?? "").trim() });
+      const src = msg.audio;
+      const audio = new Float32Array(src);
+      const result = await asr(audio, options);
+      const text = String(result?.text ?? result?.[0]?.text ?? "").trim();
+      self.postMessage({ type: "transcript", id: msg.id, text });
     } catch (err) {
       self.postMessage({ type: "transcript", id: msg.id, text: "", error: String(err?.message ?? err) });
     }

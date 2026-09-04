@@ -11,7 +11,7 @@ export default defineConfig({
     strictPort: true,
   },
   optimizeDeps: {
-    exclude: ["@huggingface/transformers"],
+    exclude: ["@huggingface/transformers", "vosk-browser"],
   },
   worker: {
     format: "es",
