@@ -11,10 +11,16 @@ describe("K-PrimeApp Chrome speech helper", () => {
   it("ships a listen page that uses the same Web Speech API", () => {
     const html = fs.readFileSync(path.join(root, "listen.html"), "utf8");
     assert.match(html, /webkitSpeechRecognition/);
-    assert.match(html, /recognition\.continuous = false/);
+    assert.match(html, /recognition\.continuous = true/);
     assert.match(html, /recognition\.interimResults = true/);
-    assert.match(html, /recognition\.maxAlternatives = 5/);
+    assert.match(html, /recognition\.lang = language/);
     assert.match(html, /Start Recording/);
+    assert.match(html, /K-PrimeApp/);
+    assert.doesNotMatch(html, /recognition\.maxAlternatives/);
+    assert.doesNotMatch(html, /recognition\.abort/);
+    assert.match(html, /<select id="language">/);
+    assert.match(html, /tr-TR/);
+    assert.match(html, /en-US/);
   });
 
   it("looks for branded Chrome or Edge, not Electron", () => {

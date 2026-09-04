@@ -728,7 +728,41 @@ function extractDigit(text) {
   return Number.isInteger(n) && n >= 1 && n <= 9999 ? n : parseCjkNumber(text);
 }
 
+const GOTO_LETTER_NUM = {
+  c: 3,
+  ce: 3,
+  uc: 3,
+  uce: 3,
+  ucc: 3,
+};
+
+function numberFromGotoHead(head) {
+  if (!head) return null;
+  if (/^\d{1,4}$/.test(head)) {
+    const n = Number.parseInt(head, 10);
+    return n >= 1 && n <= 9999 ? n : null;
+  }
+  if (Object.prototype.hasOwnProperty.call(GOTO_LETTER_NUM, head)) return GOTO_LETTER_NUM[head];
+  const n = lookupNumberToken(head);
+  return n != null && n >= 1 ? n : null;
+}
+
+/** "3egit", "5 e git", "Cegit" (üç e git), "ucegit", "besegit". */
+function parseCompactGoto(text) {
+  const compact = fold(text).replace(/\s+/g, "").replace(/['’]/g, "");
+  const tail = compact.match(/^(.*)(git|gidin|atla)$/);
+  if (!tail || !tail[1]) return null;
+  const head = tail[1];
+  const direct = numberFromGotoHead(head);
+  if (direct != null) return direct;
+  const dative = head.match(/^(.*)(ye|ya|e|a)$/);
+  if (dative?.[1]) return numberFromGotoHead(dative[1]);
+  return null;
+}
+
 function extractIndex(text, words) {
+  const compact = parseCompactGoto(text);
+  if (compact != null) return compact;
   const digit = extractDigit(text);
   if (digit != null) return digit;
   return parseNumberWords(words);
@@ -790,11 +824,18 @@ function isStop(tokens) {
 }
 
 function isGotoUtterance(text, words) {
+  if (parseCompactGoto(text) != null) return true;
+  const index = extractIndex(text, words);
+  if (index != null) {
+    if (words.some((w) => SLIDE_WORDS.has(w))) return true;
+    if (words.some((w) => GO_WORDS.has(w))) return true;
+    if (/(go\s+to|goto|ga\s+naar|gehe\s+zu|aller\s+(a|à)|ve\s+a|va\s+para|vaa?\s+para|fara\s+a|gå\s+til|gaa\s+til|ga\s+till|जाओ)/.test(text))
+      return true;
+  }
   if (/(slayt|slide|sayfa|lysbilde|bild|dias|dia|folie|glaera|diapo|diapositive|diapositiva|seite|pagina|page|स्लाइड|幻灯片|页|頁|张|張|スライド|ページ)/.test(text) && extractIndex(text, words) != null)
     return true;
-  if (/(go\s+to|goto|ga\s+naar|gehe\s+zu|aller\s+(a|à)|ve\s+a|va\s+para|vaa?\s+para|fara\s+a|gå\s+til|gaa\s+til|ga\s+till| जाओ)/.test(text) && extractIndex(text, words) != null)
-    return true;
-  if (/^\d{1,4}(\s+(e|a|ye|ya))?(\s+git)?$/.test(text)) return true;
+  if (/^\d{1,4}\s+(e|a|ye|ya)\s+(git|gidin|atla)$/.test(text)) return true;
+  if (/^\d{1,4}\s+(git|gidin|atla)$/.test(text)) return true;
   if (/第\s*\d+\s*[张張页頁枚]/.test(text) || /\d+\s*(枚目|番目|页|頁|张)/.test(text)) return true;
   if (words.length <= 3 && extractDigit(text) == null && parseNumberWords(words) != null && !hasCommandVerb(words)) {
     const n = parseNumberWords(words);
@@ -890,6 +931,9 @@ export function parseCommand(raw) {
   if (!text) return null;
   const words = text.split(" ");
   if (words.length > 12) return null;
+
+  const compactGoto = parseCompactGoto(text);
+  if (compactGoto != null) return { type: "goto", index: compactGoto };
 
   const alias = matchSpokenAlias(text, words.length);
   if (alias) return alias;

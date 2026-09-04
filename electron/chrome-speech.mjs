@@ -75,12 +75,15 @@ function startServer() {
           const body = JSON.parse((await readBody(req)) || "{}");
           const text = String(body.text || "").trim();
           const live = Boolean(body.live);
+          const alternatives = Array.isArray(body.alternatives)
+            ? body.alternatives.map((x) => String(x || "").trim()).filter(Boolean)
+            : [];
           const session = Number(body.session || url.searchParams.get("session") || 0);
           if (session && session !== generation) {
             json(res, 200, { ok: true, ignored: true });
             return;
           }
-          if (text) onTranscript?.({ text, live });
+          if (text || alternatives.length) onTranscript?.({ text: text || alternatives[0], live, alternatives });
           json(res, 200, { ok: true });
           return;
         }
@@ -161,7 +164,7 @@ export function findChrome() {
 }
 
 function openChromeApp(exe, url) {
-  const args = [`--app=${url}`, "--window-size=440,620", "--new-window", "--lang=tr", "--accept-lang=tr-TR,tr"];
+  const args = [`--app=${url}`, "--window-size=480,700", "--new-window"];
   const child = spawn(exe, args, { detached: true, stdio: "ignore" });
   child.unref();
 }

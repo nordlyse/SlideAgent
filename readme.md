@@ -22,12 +22,12 @@ Paketledikten sonra dosyalar proje kökündeki **`release/`** klasöründedir:
 
 | Platform | Dosya | Ne işe yarar |
 |---|---|---|
-| macOS | `SlideAgent-1.0.4-mac-x64.dmg` | Applications’a sürükle-bırak kurulum |
-| macOS | `SlideAgent-1.0.4-mac.zip` | `.app` arşivi |
-| Windows | `SlideAgent Setup 1.0.4.exe` | NSIS kurucu; masaüstü + Start Menu kısayolu |
-| Windows | `SlideAgent-1.0.4-win.zip` | Kurucusuz klasör (içinde `SlideAgent.exe`) |
-| Linux | `SlideAgent-1.0.4.AppImage` | Çalıştırılabilir tek dosya |
-| Linux | `slideagent_1.0.4_amd64.deb` | Debian / Ubuntu paketi |
+| macOS | `SlideAgent-1.0.6-mac-x64.dmg` | Applications’a sürükle-bırak kurulum |
+| macOS | `SlideAgent-1.0.6-mac.zip` | `.app` arşivi |
+| Windows | `SlideAgent Setup 1.0.6.exe` | NSIS kurucu; masaüstü + Start Menu kısayolu |
+| Windows | `SlideAgent-1.0.6-win.zip` | Kurucusuz klasör (içinde `SlideAgent.exe`) |
+| Linux | `SlideAgent-1.0.6.AppImage` | Çalıştırılabilir tek dosya |
+| Linux | `slideagent_1.0.6_amd64.deb` | Debian / Ubuntu paketi |
 
 Sürüm numarası `package.json` içindeki `version` alanından gelir. Mimari, paketleyen bilgisayara göre değişir.
 
@@ -39,7 +39,7 @@ Sunumu **PowerPoint** veya **LibreOffice Impress** ile aç, slayt gösterisini b
 
 ### macOS
 
-1. `release/SlideAgent-1.0.4-mac-x64.dmg` dosyasını aç.
+1. `release/SlideAgent-1.0.6-mac-x64.dmg` dosyasını aç.
 2. **SlideAgent** uygulamasını **Applications** klasörüne sürükle.
 3. İlk açılışta Gatekeeper “tanınmayan geliştirici” diyebilir: **Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç**.
 4. Mikrofon izni isteyecek. AppleScript / erişilebilirlik izni, klavye yedek yolu için gerekebilir.
@@ -48,16 +48,16 @@ Paket imzasızdır (Developer ID yok).
 
 ### Windows
 
-1. `SlideAgent Setup 1.0.4.exe` çalıştır, kurulum sihirbazını bitir.
+1. `SlideAgent Setup 1.0.6.exe` çalıştır, kurulum sihirbazını bitir.
 2. Masaüstünde ve Başlat menüsünde **SlideAgent** kısayolu oluşur.
-3. Alternatif: `SlideAgent-1.0.4-win.zip` dosyasını açıp `SlideAgent.exe` çalıştır.
+3. Alternatif: `SlideAgent-1.0.6-win.zip` dosyasını açıp `SlideAgent.exe` çalıştır.
 
 SmartScreen uyarı verebilir; yerel derleme olduğu için imza yoktur. PowerPoint’in açık olması COM yolu için yeterlidir.
 
 ### Linux
 
-- **AppImage:** `chmod +x SlideAgent-1.0.4.AppImage && ./SlideAgent-1.0.4.AppImage`
-- **deb:** `sudo dpkg -i slideagent_1.0.4_amd64.deb` (gerekirse `sudo apt -f install`)
+- **AppImage:** `chmod +x SlideAgent-1.0.6.AppImage && ./SlideAgent-1.0.6.AppImage`
+- **deb:** `sudo dpkg -i slideagent_1.0.6_amd64.deb` (gerekirse `sudo apt -f install`)
 
 LibreOffice UNO için Impress’i şöyle açmak en temiz yoldur:
 
@@ -71,7 +71,7 @@ Klavye yedeği için [xdotool](https://github.com/jordansissel/xdotool) (MIT) ö
 
 K-PrimeApp **Speech to Text** sayfası Whisper değil; Chrome’daki **`webkitSpeechRecognition`** (Google Web Speech). Bu motor milisaniyede ve Türkçe’de iyidir — ama **yalnızca gerçek Chrome / Edge** içinde çalışır. Electron Chromium’unda Google konuşma anahtarı yoktur.
 
-**Otomatik** (varsayılan) Chrome Web Speech’i **komut modunda** çalıştırır: her sözcük bitince tanımayı keser (`continuous: false`). K-PrimeApp not defteri gibi uzun dikte için `continuous: true` kullanır; o mod kısa “geri / başa dön” deyince cümle uydurur (`Yeti`, `Ember…`). Dil varsayılanı `tr-TR`.
+**Otomatik** (varsayılan) K-PrimeApp **Speech to Text** ile aynı Chrome Web Speech motorudur (`continuous: true`, `interimResults: true`, yalnızca en iyi hipotez). Dil listesi K-PrimeApp ile aynıdır; Türkçe için pencerede **Turkish (tr-TR)** seçili olmalı. Komut, Google cümleyi bitirince uygulanır.
 
 1. **K-PrimeApp / Chrome Web Speech** — varsayılan. Google Chrome veya Microsoft Edge gerekir. **Dinle** açılınca küçük bir Chrome penceresi çıkar; mikrofon iznini **o pencerede** verin. Gerekirse kırmızı **Start Recording**’e basın.
 2. **Vosk** — Chrome yoksa çevrimdışı yedek.
@@ -85,7 +85,7 @@ Komut çözümleyici tüm bu dillerdeki “ileri / geri / başa / sona / 15. sla
 
 Komut sayılmazsa slayt değişmez: “bu slaytta ileri teknoloji…” gibi cümleler yok sayılır.
 
-1.0.0–1.0.3 paketlerini kullanmayın; **1.0.4** komut modundaki Chrome tanımadır.
+1.0.0–1.0.5 paketlerini kullanmayın; **1.0.6** K-PrimeApp Speech to Text ile aynı tanıma döngüsüdür.
 
 Metin kutusundan da aynı komutlar gönderilebilir.
 
