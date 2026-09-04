@@ -1,6 +1,6 @@
 {
   "name": "slideagent",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "private": true,
   "description": "Voice-controlled agent for PowerPoint and LibreOffice Impress.",
   "license": "MIT",

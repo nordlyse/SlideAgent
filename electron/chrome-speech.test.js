@@ -18,7 +18,7 @@ describe("K-PrimeApp Chrome speech helper", () => {
     assert.match(html, /Start Recording/);
     assert.match(html, /K-PrimeApp/);
     assert.doesNotMatch(html, /recognition\.maxAlternatives/);
-    assert.doesNotMatch(html, /recognition\.abort/);
+    assert.match(html, /recognition\.abort/);
     assert.match(html, /<select id="language">/);
     assert.match(html, /tr-TR/);
     assert.match(html, /en-US/);
@@ -32,6 +32,11 @@ describe("K-PrimeApp Chrome speech helper", () => {
       list.every((p) => !/Electron/i.test(p)),
       true,
     );
+    const helper = fs.readFileSync(path.join(root, "chrome-speech.mjs"), "utf8");
+    assert.match(helper, /--app=/);
+    assert.match(helper, /17391/);
+    assert.match(helper, /user-data-dir/);
+    assert.match(helper, /pkill|taskkill/);
     const found = findChrome();
     if (found) assert.match(found, /Chrome|chrome|msedge|Edge|chromium/i);
   });
