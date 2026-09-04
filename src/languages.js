@@ -2,7 +2,7 @@
 
 export const LANGUAGES = [
   { id: "auto", label: "Otomatik / Auto", whisper: null, speech: null, vosk: null, example: "next · ileri · neste · 下一张" },
-  { id: "tr", label: "Türkçe", whisper: "turkish", speech: "tr-TR", vosk: "tr", example: "ileri, geri, başa git, 15. slayta git" },
+  { id: "tr", label: "Türkçe", whisper: "turkish", speech: "tr-TR", vosk: "tr", example: "ileri, geri, 3 e git, 5 git, başa dön" },
   { id: "en", label: "English", whisper: "english", speech: "en-US", vosk: "en", example: "next, back, first, go to slide 15" },
   { id: "nb", label: "Norsk", whisper: "norwegian", speech: "nb-NO", vosk: null, example: "neste, forrige, første, gå til lysbilde 15" },
   { id: "sv", label: "Svenska", whisper: "swedish", speech: "sv-SE", vosk: null, example: "nästa, tillbaka, första, gå till bild 15" },

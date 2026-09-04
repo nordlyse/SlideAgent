@@ -109,7 +109,7 @@ function commandKey(cmd) {
 function canFire(cmd) {
   const key = commandKey(cmd);
   const now = Date.now();
-  if (key === lastFired.key && now - lastFired.at < 400) return false;
+  if (key === lastFired.key && now - lastFired.at < 250) return false;
   lastFired = { key, at: now };
   return true;
 }
@@ -125,12 +125,11 @@ async function handleTranscript(text, { live = false, alternatives = [] } = {}) 
     return;
   }
   ui.heard.textContent = heard;
+  if (live) return;
   const cmd = picked.cmd;
   if (!cmd) {
-    if (!live) {
-      addLog(`• ${heard}`);
-      ui.action.textContent = t("Komut değil", "Not a command");
-    }
+    addLog(`• ${heard}`);
+    ui.action.textContent = t("Komut değil", "Not a command");
     return;
   }
   if (!canFire(cmd)) return;
@@ -227,8 +226,8 @@ async function startChrome() {
   setStatus("listen", t(`Dinleniyor (Chrome ${speechLanguage(config.language)})`, `Listening (Chrome ${speechLanguage(config.language)})`));
   setMicLevel(0.04);
   ui.micHint.textContent = t(
-    "Chrome penceresinde Start Recording. Komutları kısa söyleyin: ileri, geri, en başa dön, son slayta git. Dil tr-TR olmalı.",
-    "In the Chrome window press Start Recording. Say short commands. Language should be tr-TR for Turkish.",
+    "Chrome penceresinde dil = Turkish (tr-TR), Start Recording. K-PrimeApp Speech to Text ile aynı motor; komut Google bitirince gider.",
+    "In the Chrome window set Language to Turkish (tr-TR) and press Start Recording. Same engine as K-PrimeApp Speech to Text.",
   );
   return true;
 }

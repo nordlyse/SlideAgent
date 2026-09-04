@@ -9,8 +9,12 @@
       html, body { margin: 0; background: #0c1a28; color: #e8eef4; font-family: "Segoe UI", "SF Pro Text", sans-serif; }
       body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; gap: 14px; }
       h1 { margin: 0; font-size: 20px; }
-      p { margin: 0; color: #8aa0b3; font-size: 13px; line-height: 1.45; max-width: 360px; }
-      #lang { font-family: ui-monospace, monospace; color: #3ec0f0; }
+      p { margin: 0; color: #8aa0b3; font-size: 13px; line-height: 1.45; max-width: 380px; }
+      label { color: #8aa0b3; font-size: 13px; }
+      select {
+        margin-left: 8px; border-radius: 8px; border: 1px solid #2a4258; background: #132536; color: #e8eef4;
+        padding: 8px 10px; font-size: 14px;
+      }
       #chip { display: none; color: #f44336; font-weight: 650; letter-spacing: 0.02em; }
       #chip.on { display: inline-flex; align-items: center; gap: 6px; }
       #dot { width: 10px; height: 10px; border-radius: 50%; background: #f44336; animation: pulse 1s infinite; }
@@ -27,65 +31,56 @@
   </head>
   <body>
     <h1>SlideAgent</h1>
-    <p>Komut modu (ileri / geri / başa / sona). K-PrimeApp dikte için <em>continuous</em> kullanır; kısa komutta Google cümle uydurur. Burada her sözcük bitince hemen kesilir.</p>
-    <p id="lang"></p>
+    <p>K-PrimeApp Speech to Text ile aynı motor: Chrome <code>webkitSpeechRecognition</code>, <em>continuous</em> + <em>interimResults</em>. Komut, Google cümleyi bitirince uygulanır.</p>
+    <label>Language
+      <select id="language">
+        <option value="en-US">English</option>
+        <option value="tr-TR">Turkish</option>
+        <option value="de-DE">German</option>
+        <option value="fr-FR">French</option>
+        <option value="es-ES">Spanish</option>
+        <option value="it-IT">Italian</option>
+        <option value="pt-BR">Portuguese</option>
+        <option value="ja-JP">Japanese</option>
+        <option value="zh-CN">Chinese</option>
+        <option value="ar-SA">Arabic</option>
+      </select>
+    </label>
     <div id="chip"><span id="dot"></span> Listening...</div>
     <div id="heard">—</div>
     <div id="interim"></div>
     <p id="err"></p>
     <button id="btn" type="button">Start Recording</button>
     <script>
+      /* Port of K-PrimeApp frontend/src/features/IT/SpeechToText.js
+         recognition.continuous = true
+         recognition.interimResults = true
+         recognition.lang = language
+         onresult: results[i][0].transcript only; finals committed, interim displayed. */
       const params = new URLSearchParams(location.search);
       const token = params.get("token") || "";
-      const language = params.get("lang") || "tr-TR";
       const session = params.get("session") || "0";
       const qs = `?token=${encodeURIComponent(token)}&session=${encodeURIComponent(session)}`;
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const GrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
       const btn = document.getElementById("btn");
       const chip = document.getElementById("chip");
       const heard = document.getElementById("heard");
       const interimEl = document.getElementById("interim");
       const errEl = document.getElementById("err");
-      document.getElementById("lang").textContent = "dil: " + language;
+      const languageEl = document.getElementById("language");
 
-      const COMMANDS = [
-        "ileri", "geri", "ileri git", "geri git", "sonraki", "önceki",
-        "başa", "başa dön", "başa git", "en başa", "en başa dön", "en başa git",
-        "sona", "sona git", "en sona", "son slayt", "son slayta git", "ilk slayt",
-        "next", "back", "previous", "first", "last",
-      ];
+      let language = params.get("lang") || "tr-TR";
+      if (![...languageEl.options].some((o) => o.value === language)) {
+        const extra = document.createElement("option");
+        extra.value = language;
+        extra.textContent = language;
+        languageEl.append(extra);
+      }
+      languageEl.value = language;
 
       let recognition = null;
       let stopped = false;
       let running = false;
-      let fired = false;
-
-      function fold(raw) {
-        return String(raw || "")
-          .toLocaleLowerCase("tr-TR")
-          .replace(/ı/g, "i")
-          .replace(/İ/g, "i")
-          .replace(/ş/g, "s")
-          .replace(/ç/g, "c")
-          .replace(/ğ/g, "g")
-          .replace(/ö/g, "o")
-          .replace(/ü/g, "u")
-          .replace(/[^a-z0-9 ]+/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
-      }
-
-      function isCmd(text) {
-        const t = fold(text);
-        if (!t || t.length > 40) return false;
-        if (/^(ileri|geri|next|back|previous|sonraki|onceki)( git)?$/.test(t)) return true;
-        if (/(^| )(en )?basa( (don|git|gel))?$/.test(t)) return true;
-        if (/(^| )(en )?sona( (git|don|gel))?$/.test(t)) return true;
-        if (/son slayt/.test(t) || /ilk slayt/.test(t)) return true;
-        if (/^yeti$/.test(t) || /^keri$/.test(t) || /^gitti$/.test(t)) return true;
-        return COMMANDS.some((c) => fold(c) === t);
-      }
 
       function post(path, body) {
         return fetch(path + qs, {
@@ -96,22 +91,6 @@
         }).catch(() => {});
       }
 
-      function send(text, live, alternatives) {
-        const t = String(text || "").trim();
-        if (!t) return;
-        if (live) interimEl.textContent = t;
-        else {
-          heard.textContent = t;
-          interimEl.textContent = "";
-        }
-        post("/transcript", {
-          text: t,
-          live: Boolean(live),
-          alternatives: alternatives || [],
-          session: Number(session),
-        });
-      }
-
       function setRunning(on) {
         running = on;
         chip.classList.toggle("on", on);
@@ -119,64 +98,47 @@
         btn.classList.toggle("stop", on);
       }
 
-      function attachGrammar(rec) {
-        if (!GrammarList) return;
-        try {
-          const list = new GrammarList();
-          list.addFromString("#JSGF V1.0; grammar cmds; public <cmd> = " + COMMANDS.join(" | ") + " ;", 1);
-          rec.grammars = list;
-        } catch (e) {
-          /* Chrome may ignore JSGF */
-        }
-      }
-
       function startListening() {
         if (!SpeechRecognition) {
-          errEl.textContent = "Bu tarayıcıda Web Speech yok. Google Chrome kullanın.";
+          errEl.textContent = "Speech recognition is not supported in this browser. Use Chrome or Edge.";
           return;
         }
         if (recognition) {
           try { recognition.stop(); } catch (e) { /* ignore */ }
         }
+        language = languageEl.value;
         recognition = new SpeechRecognition();
-        recognition.continuous = false;
+        recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.maxAlternatives = 5;
         recognition.lang = language;
-        attachGrammar(recognition);
 
         recognition.onresult = (event) => {
-          const alts = [];
-          let interimText = "";
           let finalText = "";
+          let interimText = "";
           for (let i = event.resultIndex; i < event.results.length; i++) {
-            const result = event.results[i];
-            for (let j = 0; j < result.length; j++) {
-              const piece = (result[j].transcript || "").trim();
-              if (piece) alts.push(piece);
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalText += transcript + " ";
+            } else {
+              interimText += transcript;
             }
-            const top = (result[0].transcript || "").trim();
-            if (result.isFinal) finalText += top + " ";
-            else interimText += top;
           }
-          const unique = [...new Set(alts)];
-          const chosen = unique.find(isCmd) || (finalText.trim() || interimText.trim());
-          if (!chosen) return;
-          if (isCmd(chosen)) {
-            if (fired) return;
-            fired = true;
-            send(chosen, false, unique);
-            setTimeout(() => {
-              try { recognition.abort(); } catch (e) { /* ignore */ }
-            }, 0);
-            return;
+          if (interimText) interimEl.textContent = interimText;
+          else if (!finalText) interimEl.textContent = "";
+          if (finalText) {
+            const t = finalText.trim();
+            heard.textContent = t;
+            interimEl.textContent = "";
+            post("/transcript", {
+              text: t,
+              live: false,
+              session: Number(session),
+            });
           }
-          if (interimText) send(interimText.trim(), true, unique);
-          if (finalText.trim()) send(finalText.trim(), false, unique);
         };
 
         recognition.onerror = (event) => {
-          if (event.error === "no-speech" || event.error === "aborted") return;
+          if (event.error === "no-speech") return;
           errEl.textContent = "Error: " + event.error;
           if (event.error === "not-allowed" || event.error === "service-not-allowed") {
             stopped = true;
@@ -185,21 +147,16 @@
         };
 
         recognition.onend = () => {
-          fired = false;
           if (stopped) {
             setRunning(false);
             return;
           }
-          setTimeout(() => {
-            if (stopped) return;
-            try { recognition.start(); } catch (e) { /* already running */ }
-          }, 40);
+          try { recognition.start(); } catch (e) { /* already running */ }
         };
 
         try {
           recognition.start();
           stopped = false;
-          fired = false;
           setRunning(true);
           errEl.textContent = "";
         } catch (e) {
@@ -211,11 +168,20 @@
         stopped = true;
         setRunning(false);
         try { recognition && recognition.stop(); } catch (e) { /* ignore */ }
+        recognition = null;
       }
 
       btn.addEventListener("click", () => {
         if (running) stopListening();
         else startListening();
+      });
+
+      languageEl.addEventListener("change", () => {
+        language = languageEl.value;
+        if (running) {
+          stopListening();
+          startListening();
+        }
       });
 
       async function poll() {

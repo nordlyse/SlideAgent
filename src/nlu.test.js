@@ -38,6 +38,19 @@ describe("parseCommand Turkish", () => {
     assert.deepEqual(parseCommand("slayt 20"), { type: "goto", index: 20 });
     assert.deepEqual(parseCommand("on beşinci slayt"), { type: "goto", index: 15 });
     assert.deepEqual(parseCommand("yirmi üç"), { type: "goto", index: 23 });
+    assert.deepEqual(parseCommand("3 e git"), { type: "goto", index: 3 });
+    assert.deepEqual(parseCommand("3 git"), { type: "goto", index: 3 });
+    assert.deepEqual(parseCommand("5 e git"), { type: "goto", index: 5 });
+    assert.deepEqual(parseCommand("5 git"), { type: "goto", index: 5 });
+    assert.deepEqual(parseCommand("üç e git"), { type: "goto", index: 3 });
+    assert.deepEqual(parseCommand("üç git"), { type: "goto", index: 3 });
+    assert.deepEqual(parseCommand("beş e git"), { type: "goto", index: 5 });
+    assert.deepEqual(parseCommand("3'e git"), { type: "goto", index: 3 });
+    assert.deepEqual(parseCommand("Cegit"), { type: "goto", index: 3 });
+    assert.deepEqual(parseCommand("cegit"), { type: "goto", index: 3 });
+    assert.deepEqual(parseCommand("3egit"), { type: "goto", index: 3 });
+    assert.deepEqual(parseCommand("5egit"), { type: "goto", index: 5 });
+    assert.deepEqual(parseCommand("ucegit"), { type: "goto", index: 3 });
   });
 
   it("ignores ordinary speech that only contains ileri", () => {
