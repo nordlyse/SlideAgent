@@ -3,6 +3,8 @@
  * Matching is language-agnostic: any listed phrase works after STT.
  */
 
+import { t } from "./i18n.js";
+
 const ORDINAL_SUFFIX =
   /(inci|inci|uncu|uncu|nci|ncu|ste|te|de|eme|eme|ere|er|o|a|th|st|nd|rd|e|ve|de|te)$/i;
 
@@ -970,16 +972,16 @@ export function pickBestTranscript(texts) {
   return { text: list[0] || "", cmd: null };
 }
 
-export function describeCommand(cmd, _language = "en") {
-  if (!cmd) return "No command";
-  const en = {
-    next: "Next",
-    prev: "Previous",
-    first: "Go to start",
-    last: "Go to end",
-    start: "Start slideshow",
-    stop: "End slideshow",
-    goto: `Slide ${cmd.index}`,
+export function describeCommand(cmd, language = "en") {
+  if (!cmd) return t(language, "cmdNone");
+  if (cmd.type === "goto") return t(language, "cmdSlide", { n: cmd.index });
+  const keys = {
+    next: "cmdNext",
+    prev: "cmdPrev",
+    first: "cmdFirst",
+    last: "cmdLast",
+    start: "cmdStart",
+    stop: "cmdStop",
   };
-  return en[cmd.type] ?? cmd.type;
+  return keys[cmd.type] ? t(language, keys[cmd.type]) : cmd.type;
 }

@@ -35,6 +35,8 @@ The version number comes from `package.json`. Architecture follows the machine t
 
 Closing the window with **X** quits the app completely (no tray / background process).
 
+On first launch, choose a language. The whole interface (window, menus, and status text) uses that language. You can change it later in the Language menu.
+
 Open the deck in **PowerPoint** or **LibreOffice Impress**, start the slideshow, then turn **Listen** on in SlideAgent. Speech to Text runs in the SlideAgent window; a separate browser page is not shown.
 
 ### macOS

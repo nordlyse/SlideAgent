@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { runSlideCommand } from "./control.mjs";
 import { ensureVoskModel, voskLangKey } from "./vosk-model.mjs";
 import { startChromeSpeech, stopChromeSpeech, findChrome } from "./chrome-speech.mjs";
+import { t } from "../src/i18n.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEV_URL = process.env.SLIDEAGENT_URL || "http://localhost:5173";
@@ -46,12 +47,13 @@ function configPath() {
 
 function normalizeConfig(raw = {}) {
   const next = {
-    language: "tr",
+    language: "en",
     engine: "auto",
     stt: "chrome",
     listening: false,
     openAtLogin: false,
     kprimeSpeech: true,
+    localeChosen: false,
     ...raw,
   };
   if (!next.kprimeSpeech || next.stt === "auto" || next.stt === "whisper") {
@@ -59,7 +61,8 @@ function normalizeConfig(raw = {}) {
     next.kprimeSpeech = true;
   }
   if (!["chrome", "vosk", "whisper"].includes(next.stt)) next.stt = "chrome";
-  if (!next.language) next.language = "tr";
+  if (!next.language) next.language = "en";
+  next.localeChosen = Boolean(next.localeChosen);
   return next;
 }
 
@@ -132,12 +135,13 @@ function createWindow() {
 
 function rebuildTray() {
   const cfg = loadConfig();
+  const lang = cfg.language || "en";
   const menu = Menu.buildFromTemplate([
     { label: "SlideAgent", enabled: false },
     { type: "separator" },
-    { label: "Show window", click: () => createWindow() },
+    { label: t(lang, "trayShow"), click: () => createWindow() },
     {
-      label: cfg.listening ? "Stop listening" : "Start listening",
+      label: cfg.listening ? t(lang, "trayStop") : t(lang, "trayStart"),
       click: () => {
         const next = { ...loadConfig(), listening: !loadConfig().listening };
         saveConfig(next);
@@ -147,7 +151,7 @@ function rebuildTray() {
     },
     { type: "separator" },
     {
-      label: "Open at login",
+      label: t(lang, "trayLogin"),
       type: "checkbox",
       checked: cfg.openAtLogin,
       click: (item) => {
@@ -157,7 +161,7 @@ function rebuildTray() {
       },
     },
     { type: "separator" },
-    { label: "Quit", accelerator: "CmdOrCtrl+Q", click: () => quitApp() },
+    { label: t(lang, "quit"), accelerator: "CmdOrCtrl+Q", click: () => quitApp() },
   ]);
   if (!tray) {
     const image = loadIcon("tray.png", process.platform === "darwin" ? 22 : 32);
@@ -170,7 +174,8 @@ function rebuildTray() {
 }
 
 function installAppMenu() {
-  const quitItem = { label: "Quit", accelerator: "CmdOrCtrl+Q", click: () => quitApp() };
+  const lang = loadConfig().language || "en";
+  const quitItem = { label: t(lang, "quit"), accelerator: "CmdOrCtrl+Q", click: () => quitApp() };
   const template =
     process.platform === "darwin"
       ? [{ label: "SlideAgent", submenu: [{ role: "about" }, { type: "separator" }, quitItem] }]
@@ -198,8 +203,7 @@ async function ensureMicrophone() {
     return {
       ok: false,
       status: current,
-      reason:
-        "Microphone access is off. Enable SlideAgent (or Electron while developing) in System Settings → Privacy & Security → Microphone.",
+      reason: "mic-denied",
     };
   }
   const granted = await systemPreferences.askForMediaAccess("microphone");
@@ -209,7 +213,7 @@ async function ensureMicrophone() {
     status,
     reason: granted
       ? null
-      : "Microphone permission was not granted. System Settings → Privacy & Security → Microphone.",
+      : "mic-not-granted",
   };
 }
 
@@ -254,6 +258,7 @@ function registerIpc() {
   ipcMain.handle("set-config", (_e, patch) => {
     const next = normalizeConfig({ ...loadConfig(), ...(patch && typeof patch === "object" ? patch : {}) });
     saveConfig(next);
+    installAppMenu();
     rebuildTray();
     return next;
   });
@@ -262,8 +267,8 @@ function registerIpc() {
   ipcMain.handle("ensure-vosk-model", async (e, lang) => {
     const key = voskLangKey(lang) || lang;
     try {
-      return await ensureVoskModel(app.getPath("userData"), key, (pct, label) => {
-        e.sender.send("vosk-progress", { pct, label });
+      return await ensureVoskModel(app.getPath("userData"), key, (pct, keyName, mb) => {
+        e.sender.send("vosk-progress", { pct, key: keyName, mb });
       });
     } catch (err) {
       return { ok: false, reason: String(err?.message ?? err) };

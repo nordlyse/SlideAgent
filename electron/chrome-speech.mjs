@@ -245,7 +245,7 @@ export async function startChromeSpeech({ lang = "tr-TR", transcript, closed, us
     return {
       ok: false,
       reason:
-        "Google Chrome or Edge is not installed. Speech to Text uses the same Google engine; Chrome or Edge must be on this machine.",
+        "no-chrome",
     };
   }
   await startServer();
