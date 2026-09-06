@@ -27,10 +27,13 @@
             <p class="tag" data-i18n="tag">Voice control for PowerPoint / Impress</p>
           </div>
         </div>
-        <label class="switch">
-          <input id="listen" type="checkbox" />
-          <span data-i18n="listen">Listen</span>
-        </label>
+        <div class="header-actions">
+          <button id="helpOpen" type="button" class="ghost" data-i18n="help">Help</button>
+          <label class="switch">
+            <input id="listen" type="checkbox" />
+            <span data-i18n="listen">Listen</span>
+          </label>
+        </div>
       </header>
 
       <section class="panel status-panel">
@@ -85,6 +88,18 @@
       <footer>
         <p id="examples"></p>
       </footer>
+    </div>
+
+    <div id="help" hidden>
+      <div class="help-card">
+        <div class="help-top">
+          <h2 data-i18n="helpTitle">Supported words</h2>
+          <button id="helpClose" type="button" class="ghost" data-i18n="helpClose">Close</button>
+        </div>
+        <p id="helpIntro" class="hint" data-i18n="helpIntro">Say or type these commands:</p>
+        <dl id="helpList"></dl>
+        <p id="helpGotoNote" class="hint" data-i18n="helpGotoNote">For a specific slide, say a number such as 15.</p>
+      </div>
     </div>
     <script type="module" src="/src/renderer.js"></script>
   </body>

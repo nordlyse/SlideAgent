@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { I18N_KEYS, UI, t, translateReason } from "./i18n.js";
+import { helpPhrases } from "./help.js";
 import { describeCommand } from "./nlu.js";
 
 describe("i18n", () => {
@@ -12,8 +13,8 @@ describe("i18n", () => {
   });
 
   it("translates German and Japanese UI strings", () => {
-    assert.equal(t("de", "listen"), "Zuhören");
-    assert.equal(t("ja", "listen"), "聞き取り");
+    assert.equal(t("de", "help"), "Hilfe");
+    assert.equal(t("ja", "help"), "ヘルプ");
     assert.equal(t("de", "cmdSlide", { n: 15 }), "Folie 15");
     assert.equal(t("ja", "cmdSlide", { n: 15 }), "スライド 15");
   });
@@ -25,6 +26,14 @@ describe("i18n", () => {
   it("maps machine reasons to the UI language", () => {
     assert.equal(translateReason("de", "no-chrome"), t("de", "chromeMissing"));
     assert.equal(translateReason("ja", "mic-denied"), t("ja", "micDenied"));
+  });
+});
+
+describe("help phrases", () => {
+  it("lists command examples in the chosen language", () => {
+    assert.ok(helpPhrases("de").next.includes("weiter"));
+    assert.ok(helpPhrases("ja").goto.some((w) => w.includes("15")));
+    assert.deepEqual(helpPhrases("xx").next, helpPhrases("en").next);
   });
 });
 
