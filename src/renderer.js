@@ -3,6 +3,7 @@ import { WhisperStt } from "./stt.js";
 import { VoskStt } from "./vosk-stt.js";
 import { LANGUAGES, PICKER_LANGUAGES, knownLanguageId, languageById, voskLanguageKey, speechLanguage } from "./languages.js";
 import { htmlLang, resolveUiLanguage, t, translateReason } from "./i18n.js";
+import { helpPhrases } from "./help.js";
 
 if (!window.slideagent) {
   const mem = {
@@ -49,6 +50,10 @@ const ui = {
   micHint: $("micHint"),
   meterBar: $("meterBar"),
   meterLabel: $("meterLabel"),
+  help: $("help"),
+  helpOpen: $("helpOpen"),
+  helpClose: $("helpClose"),
+  helpList: $("helpList"),
 };
 
 let config = {
@@ -112,6 +117,7 @@ function applyStaticI18n() {
   }
   fillLanguages();
   updateExamples();
+  fillHelp();
   refreshMeterLabel();
   if (ui.micHint && lastHintKey) ui.micHint.textContent = tr(lastHintKey);
   refreshStatus();
@@ -132,6 +138,39 @@ function updateExamples() {
       }),
     );
   }
+}
+
+function fillHelp() {
+  if (!ui.helpList) return;
+  const phrases = helpPhrases(uiLang());
+  const rows = [
+    ["cmdNext", phrases.next],
+    ["cmdPrev", phrases.prev],
+    ["cmdFirst", phrases.first],
+    ["cmdLast", phrases.last],
+    ["cmdSlide", phrases.goto, { n: 15 }],
+  ];
+  ui.helpList.replaceChildren();
+  for (const [key, words, vars] of rows) {
+    const wrap = document.createElement("div");
+    const dt = document.createElement("dt");
+    dt.textContent = tr(key, vars);
+    const dd = document.createElement("dd");
+    for (const word of words) {
+      const code = document.createElement("code");
+      code.textContent = word;
+      dd.append(code);
+    }
+    wrap.append(dt, dd);
+    ui.helpList.append(wrap);
+  }
+}
+
+function showHelp(on) {
+  if (!ui.help) return;
+  if (on) fillHelp();
+  ui.help.hidden = !on;
+  ui.help.setAttribute("aria-hidden", on ? "false" : "true");
 }
 
 function refreshMeterLabel() {
@@ -401,6 +440,18 @@ ui.manual.addEventListener("keydown", (e) => {
     e.preventDefault();
     ui.send.click();
   }
+});
+
+ui.helpOpen?.addEventListener("click", () => {
+  if (!config.localeChosen) return;
+  showHelp(true);
+});
+ui.helpClose?.addEventListener("click", () => showHelp(false));
+ui.help?.addEventListener("click", (e) => {
+  if (e.target === ui.help) showHelp(false);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && ui.help && !ui.help.hidden) showHelp(false);
 });
 
 ui.setupLangs?.addEventListener("click", async (e) => {
