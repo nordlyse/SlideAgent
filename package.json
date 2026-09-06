@@ -15,7 +15,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:ico": "node scripts/make-ico.mjs",
-    "test": "node --test src/nlu.test.js electron/archive.test.js electron/chrome-speech.test.js",
+    "test": "node --test src/nlu.test.js src/i18n.test.js electron/archive.test.js electron/chrome-speech.test.js",
     "dist": "npm run build && npm run build:ico && electron-builder --mac --linux --win --publish never",
     "dist:mac": "npm run build && electron-builder --mac --publish never",
     "dist:linux": "npm run build && electron-builder --linux --publish never",

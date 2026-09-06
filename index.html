@@ -7,72 +7,85 @@
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <header>
+    <div id="setup" hidden>
       <div class="brand">
         <img src="./assets/icon.png" alt="" width="36" height="36" />
         <div>
           <h1>SlideAgent</h1>
-          <p class="tag">Voice control for PowerPoint / Impress</p>
+          <p class="tag">Choose your language · Sprache wählen · Dil seçin · 言語を選択</p>
         </div>
       </div>
-      <label class="switch">
-        <input id="listen" type="checkbox" />
-        <span>Listen</span>
-      </label>
-    </header>
+      <div id="setupLangs"></div>
+    </div>
 
-    <section class="panel status-panel">
-      <p id="status" data-kind="idle">Starting…</p>
-      <dl>
-        <div><dt>Microphone</dt><dd><span class="meter" aria-hidden="true"><span id="meterBar"></span></span> <span id="meterLabel">off</span></dd></div>
-        <div><dt>Heard</dt><dd id="heard">—</dd></div>
-        <div><dt>Command</dt><dd id="action">—</dd></div>
-        <div><dt>Engine</dt><dd id="backend">—</dd></div>
-      </dl>
-    </section>
+    <div id="app">
+      <header>
+        <div class="brand">
+          <img src="./assets/icon.png" alt="" width="36" height="36" />
+          <div>
+            <h1>SlideAgent</h1>
+            <p class="tag" data-i18n="tag">Voice control for PowerPoint / Impress</p>
+          </div>
+        </div>
+        <label class="switch">
+          <input id="listen" type="checkbox" />
+          <span data-i18n="listen">Listen</span>
+        </label>
+      </header>
 
-    <section class="panel">
-      <label>
-        Language
-        <select id="language"></select>
-      </label>
-      <label>
-        Presentation engine
-        <select id="engine">
-          <option value="auto">Auto</option>
-          <option value="powerpoint">PowerPoint API</option>
-          <option value="impress">LibreOffice UNO</option>
-          <option value="keyboard">Keyboard</option>
-        </select>
-      </label>
-      <label>
-        Speech recognition
-        <select id="stt">
-          <option value="chrome">Speech to Text</option>
-          <option value="vosk">Vosk (offline fallback)</option>
-        </select>
-      </label>
-      <p id="micHint" class="hint"></p>
-    </section>
+      <section class="panel status-panel">
+        <p id="status" data-kind="idle">Starting…</p>
+        <dl>
+          <div><dt data-i18n="microphone">Microphone</dt><dd><span class="meter" aria-hidden="true"><span id="meterBar"></span></span> <span id="meterLabel">off</span></dd></div>
+          <div><dt data-i18n="heard">Heard</dt><dd id="heard">—</dd></div>
+          <div><dt data-i18n="command">Command</dt><dd id="action">—</dd></div>
+          <div><dt data-i18n="engine">Engine</dt><dd id="backend">—</dd></div>
+        </dl>
+      </section>
 
-    <section class="panel">
-      <label class="grow">
-        Type a command
-        <span class="row">
-          <input id="manual" type="text" placeholder="next, back, first, go to slide 15" />
-          <button id="send" type="button">Send</button>
-        </span>
-      </label>
-    </section>
+      <section class="panel">
+        <label>
+          <span data-i18n="language">Language</span>
+          <select id="language"></select>
+        </label>
+        <label>
+          <span data-i18n="presentationEngine">Presentation engine</span>
+          <select id="engine">
+            <option value="auto" data-i18n="engineAuto">Auto</option>
+            <option value="powerpoint" data-i18n="enginePowerpoint">PowerPoint API</option>
+            <option value="impress" data-i18n="engineImpress">LibreOffice UNO</option>
+            <option value="keyboard" data-i18n="engineKeyboard">Keyboard</option>
+          </select>
+        </label>
+        <label>
+          <span data-i18n="speechRecognition">Speech recognition</span>
+          <select id="stt">
+            <option value="chrome" data-i18n="sttChrome">Speech to Text</option>
+            <option value="vosk" data-i18n="sttVosk">Vosk (offline fallback)</option>
+          </select>
+        </label>
+        <p id="micHint" class="hint"></p>
+      </section>
 
-    <section class="panel">
-      <h2>Recent commands</h2>
-      <ul id="log"></ul>
-    </section>
+      <section class="panel">
+        <label class="grow">
+          <span data-i18n="typeCommand">Type a command</span>
+          <span class="row">
+            <input id="manual" type="text" placeholder="next, back, first, go to slide 15" />
+            <button id="send" type="button" data-i18n="send">Send</button>
+          </span>
+        </label>
+      </section>
 
-    <footer>
-      <p id="examples">Examples: <code>next</code> <code>neste</code> <code>weiter</code> <code>siguiente</code> <code>下一张</code></p>
-    </footer>
+      <section class="panel">
+        <h2 data-i18n="recent">Recent commands</h2>
+        <ul id="log"></ul>
+      </section>
+
+      <footer>
+        <p id="examples"></p>
+      </footer>
+    </div>
     <script type="module" src="/src/renderer.js"></script>
   </body>
 </html>

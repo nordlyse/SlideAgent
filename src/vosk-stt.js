@@ -13,22 +13,22 @@ async function loadVoskModel(url) {
   const Model = mod.Model ?? mod.default?.Model;
   if (typeof Model !== "function") {
     const createModel = mod.createModel ?? mod.default?.createModel;
-    if (typeof createModel !== "function") throw new Error("vosk-browser failed to load");
+    if (typeof createModel !== "function") throw new Error("voskBrowserFail");
     return createModel(url);
   }
   const model = new Model(url);
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("Vosk timed out")), 180000);
+    const timer = setTimeout(() => reject(new Error("voskTimeout")), 180000);
     const fail = (err) => {
       clearTimeout(timer);
-      reject(err instanceof Error ? err : new Error(String(err?.error ?? err ?? "Vosk error")));
+      reject(err instanceof Error ? err : new Error(String(err?.error ?? err ?? "voskError")));
     };
     model.on("error", fail);
     model.on("load", (message) => {
       if (message?.result) {
         clearTimeout(timer);
         resolve(model);
-      } else fail(new Error("Vosk model failed to load"));
+      } else fail(new Error("voskLoadFail"));
     });
   });
 }
@@ -36,13 +36,14 @@ async function loadVoskModel(url) {
 const modelCache = new Map();
 
 export class VoskStt {
-  constructor({ onTranscript, onPartial, onStatus, onLevel, language, langKey }) {
+  constructor({ onTranscript, onPartial, onStatus, onLevel, language, langKey, t }) {
     this.onTranscript = onTranscript;
     this.onPartial = onPartial;
     this.onStatus = onStatus;
     this.onLevel = onLevel;
-    this.language = language || "tr";
-    this.langKey = langKey || "tr";
+    this.language = language || "en";
+    this.langKey = langKey || "en";
+    this.t = typeof t === "function" ? t : (key) => key;
     this.modelUrl = null;
     this.listening = false;
     this.ctx = null;
@@ -59,7 +60,7 @@ export class VoskStt {
     if (this.listening) return;
     const mic = await window.slideagent?.ensureMicrophone?.();
     if (mic && mic.ok === false) {
-      throw new Error(mic.reason || "Microphone permission denied");
+      throw new Error(mic.reason || "mic-denied");
     }
 
     this.stream = await navigator.mediaDevices.getUserMedia({
@@ -100,13 +101,13 @@ export class VoskStt {
 
     this.listening = true;
     try {
-      this.onStatus?.("model", "Preparing speech model…");
+      this.onStatus?.("model", this.t("voskPreparing"));
       const ready = await window.slideagent.ensureVoskModel(this.langKey);
-      if (!ready?.ok) throw new Error(ready?.reason || "Vosk model missing");
+      if (!ready?.ok) throw new Error(ready?.reason || "no-model");
       this.modelUrl = ready.fileUrl;
       await this.ensureRecognizer();
       if (this.ctx.state === "suspended") await this.ctx.resume();
-      this.onStatus?.("listen", "Listening — speak");
+      this.onStatus?.("listen", this.t("listeningSpeak"));
     } catch (err) {
       await this.stop();
       throw err;
@@ -124,7 +125,7 @@ export class VoskStt {
   }
 
   async ensureRecognizer() {
-    if (!this.modelUrl) throw new Error("Vosk model URL missing");
+    if (!this.modelUrl) throw new Error("voskNoUrl");
     let model = modelCache.get(this.modelUrl);
     if (!model) {
       try {

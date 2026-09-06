@@ -11,7 +11,7 @@ files:
   - electron/**/*
   - helpers/**/*
   - assets/**/*
-  - package.json
+  - src/i18n.js
   - "!**/node_modules/**"
 asarUnpack:
   - "**/*.wasm"

@@ -31,11 +31,12 @@ function downsample(input, fromRate) {
 }
 
 export class WhisperStt {
-  constructor({ onTranscript, onStatus, onLevel, language }) {
+  constructor({ onTranscript, onStatus, onLevel, language, t }) {
     this.onTranscript = onTranscript;
     this.onStatus = onStatus;
     this.onLevel = onLevel;
-    this.language = language || "tr";
+    this.language = language || "en";
+    this.t = typeof t === "function" ? t : (key) => key;
     this.worker = null;
     this.ready = false;
     this.listening = false;
@@ -58,7 +59,7 @@ export class WhisperStt {
     if (this.listening) return;
     const mic = await window.slideagent?.ensureMicrophone?.();
     if (mic && mic.ok === false) {
-      throw new Error(mic.reason || "Microphone permission denied");
+      throw new Error(mic.reason || "mic-denied");
     }
 
     this.stream = await navigator.mediaDevices.getUserMedia({
@@ -92,10 +93,10 @@ export class WhisperStt {
     this.keepAlive.connect(this.ctx.destination);
 
     this.listening = true;
-    this.onStatus?.("listen", "Microphone on, loading Whisper…");
+    this.onStatus?.("listen", this.t("whisperMicLoading"));
     await this.ensureWorker();
     if (this.ctx.state === "suspended") await this.ctx.resume();
-    this.onStatus?.("listen", "Listening (Whisper) — speak, then pause");
+    this.onStatus?.("listen", this.t("whisperListenPause"));
   }
 
   async resume() {
@@ -117,19 +118,21 @@ export class WhisperStt {
       this._ready = resolve;
       this._fail = reject;
       this.worker.postMessage({ type: "init" });
-      setTimeout(() => reject(new Error("Whisper timed out")), 180000);
+      setTimeout(() => reject(new Error("whisperTimeout")), 180000);
     });
   }
 
   onWorker(msg) {
     if (msg.type === "progress") {
-      this.onStatus?.("model", `${msg.label} (${msg.pct}%)`);
+      const label =
+        msg.key === "modelMb" ? this.t("modelMb", { mb: msg.mb }) : this.t(msg.key || "loadingModel");
+      this.onStatus?.("model", `${label} (${msg.pct}%)`);
       return;
     }
     if (msg.type === "ready") {
       this.ready = true;
       this._ready?.();
-      this.onStatus?.("ready", "Whisper ready");
+      this.onStatus?.("ready", this.t("whisperReady"));
       return;
     }
     if (msg.type === "error") {
@@ -142,7 +145,7 @@ export class WhisperStt {
       const text = String(msg.text ?? "").trim();
       if (text) this.onTranscript?.(text);
       else this.onTranscript?.("", msg.error || "empty");
-      if (this.listening && this.ready) this.onStatus?.("listen", "Listening (Whisper)");
+      if (this.listening && this.ready) this.onStatus?.("listen", this.t("whisperListen"));
     }
   }
 
@@ -194,7 +197,7 @@ export class WhisperStt {
     this.busy = true;
     const id = this.nextId++;
     this.worker.postMessage({ type: "transcribe", id, audio, language: this.language }, [audio.buffer]);
-    this.onStatus?.("busy", "Transcribing…");
+    this.onStatus?.("busy", this.t("whisperTranscribing"));
   }
 
   async stop() {
