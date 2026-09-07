@@ -101,7 +101,7 @@ function quitApp() {
   app.quit();
 }
 
-function createWindow() {
+function openWindow() {
   if (win) {
     win.show();
     win.focus();
@@ -139,7 +139,7 @@ function rebuildTray() {
   const menu = Menu.buildFromTemplate([
     { label: "SlideAgent", enabled: false },
     { type: "separator" },
-    { label: t(lang, "trayShow"), click: () => createWindow() },
+    { label: t(lang, "trayShow"), click: () => openWindow() },
     {
       label: cfg.listening ? t(lang, "trayStop") : t(lang, "trayStart"),
       click: () => {
@@ -167,7 +167,7 @@ function rebuildTray() {
     const image = loadIcon("tray.png", process.platform === "darwin" ? 22 : 32);
     tray = new Tray(image.isEmpty() ? loadIcon("icon.png", 32) : image);
     tray.setToolTip("SlideAgent");
-    tray.on("click", () => createWindow());
+    tray.on("click", () => openWindow());
     tray.on("right-click", () => tray.popUpContextMenu());
   }
   tray.setContextMenu(menu);
@@ -309,7 +309,7 @@ app.whenReady().then(async () => {
   app.setLoginItemSettings({ openAtLogin: cfg.openAtLogin });
   installAppMenu();
   rebuildTray();
-  createWindow();
+  openWindow();
 });
 
 app.on("before-quit", () => {
@@ -322,5 +322,5 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-  createWindow();
+  openWindow();
 });

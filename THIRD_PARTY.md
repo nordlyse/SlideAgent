@@ -1,6 +1,8 @@
 # Third-party licenses
 
-SlideAgent itself is MIT. Runtime and packaging tools used in this repository are MIT or Apache-2.0.
+SlideAgent itself is MIT. See [LICENSE](LICENSE). Runtime and packaging tools used in this repository are MIT or Apache-2.0.
+
+There is **no warranty**. Bugs, missed commands, failed presentations, and other problems are the user’s risk; the author is not liable. The MIT “AS IS” text in LICENSE is the legal disclaimer.
 
 | Package | License | Use |
 |---|---|---|

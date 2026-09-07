@@ -12,6 +12,8 @@ files:
   - helpers/**/*
   - assets/**/*
   - src/i18n.js
+  - LICENSE
+  - THIRD_PARTY.md
   - "!**/node_modules/**"
 asarUnpack:
   - "**/*.wasm"

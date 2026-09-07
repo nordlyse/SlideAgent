@@ -22,12 +22,12 @@ After packaging, files are in the project-root **`release/`** folder:
 
 | Platform | File | What it is |
 |---|---|---|
-| macOS | `SlideAgent-1.1.1-mac-x64.dmg` | Drag-and-drop into Applications |
-| macOS | `SlideAgent-1.1.1-mac.zip` | `.app` archive |
-| Windows | `SlideAgent Setup 1.1.1.exe` | NSIS installer; desktop + Start Menu shortcut |
-| Windows | `SlideAgent-1.1.1-win.zip` | Portable folder (`SlideAgent.exe` inside) |
-| Linux | `SlideAgent-1.1.1.AppImage` | Single executable |
-| Linux | `slideagent_1.1.1_amd64.deb` | Debian / Ubuntu package |
+| macOS | `SlideAgent-1.0.0-mac-x64.dmg` | Drag-and-drop into Applications |
+| macOS | `SlideAgent-1.0.0-mac.zip` | `.app` archive |
+| Windows | `SlideAgent Setup 1.0.0.exe` | NSIS installer; desktop + Start Menu shortcut |
+| Windows | `SlideAgent-1.0.0-win.zip` | Portable folder (`SlideAgent.exe` inside) |
+| Linux | `SlideAgent-1.0.0.AppImage` | Single executable |
+| Linux | `slideagent_1.0.0_amd64.deb` | Debian / Ubuntu package |
 
 The version number comes from `package.json`. Architecture follows the machine that built the package.
 
@@ -41,7 +41,7 @@ Open the deck in **PowerPoint** or **LibreOffice Impress**, start the slideshow,
 
 ### macOS
 
-1. Open `release/SlideAgent-1.1.1-mac-x64.dmg`.
+1. Open `release/SlideAgent-1.0.0-mac-x64.dmg`.
 2. Drag **SlideAgent** into **Applications**.
 3. Gatekeeper may say the developer is unidentified: **System Settings → Privacy & Security → Open Anyway**.
 4. It will ask for microphone access. AppleScript / accessibility permission may be needed for the keyboard fallback.
@@ -50,16 +50,16 @@ The package is unsigned (no Developer ID).
 
 ### Windows
 
-1. Run `SlideAgent Setup 1.1.1.exe` and finish the wizard.
-2. A **SlideAgent** shortcut is created on the desktop and in the Start menu.
-3. Alternatively unzip `SlideAgent-1.1.1-win.zip` and run `SlideAgent.exe`.
+1. Run `SlideAgent Setup 1.0.0.exe` and finish the wizard.
+2. A **SlideAgent** shortcut is added on the desktop and in the Start menu.
+3. Alternatively unzip `SlideAgent-1.0.0-win.zip` and run `SlideAgent.exe`.
 
 SmartScreen may warn because the build is local and unsigned. PowerPoint must be open for the COM path.
 
 ### Linux
 
-- **AppImage:** `chmod +x SlideAgent-1.1.1.AppImage && ./SlideAgent-1.1.1.AppImage`
-- **deb:** `sudo dpkg -i slideagent_1.1.1_amd64.deb` (then `sudo apt -f install` if needed)
+- **AppImage:** `chmod +x SlideAgent-1.0.0.AppImage && ./SlideAgent-1.0.0.AppImage`
+- **deb:** `sudo dpkg -i slideagent_1.0.0_amd64.deb` (then `sudo apt -f install` if needed)
 
 The cleanest LibreOffice UNO setup is to start Impress like this:
 
@@ -87,8 +87,6 @@ English, Norwegian, Swedish, Turkish, Chinese, Japanese, Danish, Hindi, German, 
 The command parser understands “next / back / first / last / go to slide 15” in all of those languages at once.
 
 Ordinary speech that is not a command does not change the slide: sentences like “this slide shows advanced technology…” are ignored.
-
-Do not use 1.0.0–1.1.0 packages; **1.1.1** is the English UI.
 
 The same commands can be typed in the text box.
 
@@ -123,7 +121,11 @@ Config file: `electron-builder.yml`. Output folder: `release/`. Windows `.ico` g
 
 ## Licenses
 
-SlideAgent is **MIT**. Dependencies are MIT or Apache-2.0 only:
+SlideAgent is **MIT**. Full text, third-party list, and no-warranty terms: [LICENSE](LICENSE).
+
+The software is provided **as is**. The author is not liable for bugs, missed slide commands, failed presentations, or other harm from using it.
+
+Dependencies used here are MIT or Apache-2.0 only (or APIs of software you already installed):
 
 | Tool | License | Role |
 |---|---|---|
@@ -149,3 +151,5 @@ Details: [THIRD_PARTY.md](THIRD_PARTY.md).
 | Last name  | Lyse                                                |
 | GitHub     | [nordlyse](https://github.com/nordlyse)             |
 | Email      | [jakob.lyse@gmail.com](mailto:jakob.lyse@gmail.com) |
+
+Developed with [Cursor](https://cursor.com).

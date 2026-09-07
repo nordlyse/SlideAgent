@@ -19,3 +19,61 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+----------------------------------------------------------------------
+No warranty (plain language)
+
+SlideAgent is a personal, unpaid tool. You use it at your own risk.
+
+Jakob Lyse is not responsible for bugs, missed or wrong slide commands,
+failed or interrupted presentations, microphone or privacy problems,
+data loss, security issues, or any other damage, cost, or claim that
+comes from installing, running, or relying on this software.
+
+There is no promise that it will work on your computer, with your version
+of PowerPoint or LibreOffice, with Chrome or Edge speech recognition, or
+during a live talk. Test it yourself before you depend on it.
+
+If something goes wrong, you — not the author — bear that risk.
+
+----------------------------------------------------------------------
+Why this license
+
+SlideAgent is released under the MIT License because the technologies
+bundled or used here are MIT or Apache-2.0 (or are APIs of software you
+already installed, which this repo does not redistribute). MIT is
+compatible with those licenses and already disclaims warranty and
+liability.
+
+Third-party licenses stay in force for those components. This file does
+not give extra rights to Electron, Vosk, Whisper, Chrome, Office, or
+anything else you did not write.
+
+----------------------------------------------------------------------
+Technologies and their licenses
+
+| Technology | License | Role in SlideAgent |
+|---|---|---|
+| SlideAgent (this project) | MIT | Voice remote for slides |
+| Electron | MIT | Desktop app shell |
+| Chromium (inside Electron) | BSD-style (Chromium) | Embedded browser; cannot use Google Web Speech |
+| electron-builder | MIT | macOS / Windows / Linux installers |
+| Vite | MIT | UI bundler |
+| Node.js (dev / packaging) | MIT | Tooling runtime |
+| vosk-browser | Apache-2.0 | Offline streaming speech (fallback) |
+| Vosk small language models (Alphacephei) | Apache-2.0 | Downloaded on first Vosk listen; not in git |
+| @huggingface/transformers | Apache-2.0 | Whisper tiny fallback STT |
+| onnxruntime-web (transitive) | MIT | ONNX inference for Whisper |
+| OpenAI Whisper weights (Xenova/whisper-tiny) | MIT | Optional ASR model |
+| Google Chrome or Microsoft Edge | their own EULAs | Required for Speech to Text; not redistributed |
+| Web Speech API (webkitSpeechRecognition) | browser API | Same Google engine as K-PrimeApp Speech to Text |
+| xdotool (optional, Linux) | MIT | Keyboard fallback if you install it yourself |
+| PowerPoint COM / AppleScript | Microsoft terms | Controls a PowerPoint you already installed |
+| LibreOffice UNO | MPL-2.0 (LibreOffice) | Controls an Impress you already installed |
+| Python (system) | PSF | Runs helpers/impress.py if Python is installed |
+
+Not shipped in this repository: Google speech servers, Chrome/Edge,
+PowerPoint, LibreOffice, or xdotool. Using those is under their owners’
+terms, not this MIT license.
+
+Details: THIRD_PARTY.md
